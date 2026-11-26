@@ -14,6 +14,7 @@ Live: https://wordenbeck.github.io/lochfrass/
 - Echte Physik (Rapier): Dinge kippen über die Lochkante, verkanten sich und fallen hinein. Häuser haben 1–3 Etagen (Hochhäuser mehr), die einzeln abbrechen
 - Schwierigkeit wählbar (Leicht / Normal / Schwer). Gegner starten langsam und werden über eine Anlaufzeit schneller und schlauer
 - Look: Comic (Cel-Shading, dunkle Konturlinien, kräftige Farben, runde Formen)
+- Kamera: schräg von hinten (gut 50° Neigung), zoomt mit dem Loch heraus. Das Loch nimmt etwa ein Fünftel der Bildbreite ein, am Start weniger (`CAM` in `main.js`)
 - Technik: `index.html` plus JS-Module, Three.js und Rapier über CDN, Sound per Web Audio (ohne Dateien), keine Build-Tools, Hosting auf GitHub Pages (0 €)
 
 ## Welten

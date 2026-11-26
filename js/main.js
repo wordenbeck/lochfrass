@@ -570,7 +570,8 @@ const AP = { speed: 1, smart: 1 };   // Autopilot zum Testen; mit weniger Tempo/
 let shakeT = 0, shakeA = 0, bossEaten = false, bossReadyShown = false, endT = 0, leader = null, jamHintShown = false;
 const T = { car: 0, house: 0, boss: 0 };   // wann zum ersten Mal ein Auto, ein Haus, der Endboss (für Tests)
 const camLook = new THREE.Vector3(player.x, 0, player.z);
-camera.position.set(player.x, 14, player.z + 8);
+const CAM = { h: 13, b: 10.5, d: Math.hypot(13, 10.5), z0: 1.1, zr: 0.42 };   // Höhe und Abstand nach hinten (mal Zoom), Zoom = z0 + Radius · zr
+camera.position.set(player.x, CAM.h * 1.25, player.z + CAM.b * 1.25);
 
 function startGame() {
   D = DIFFS[diffKey];
@@ -764,9 +765,10 @@ function updateVisuals(dt, now) {
     h.glow.material.opacity = h.skin.pulse ? 0.55 + 0.45 * Math.sin(now / 180) : 1;
     if (h.deco) { h.decoGrp.visible = h.alive; h.decoGrp.position.set(h.x, 0, h.z); h.decoGrp.scale.setScalar(h.rShow * ps); h.deco.anim(now / 1000, dt, h); }
   }
-  const zoom = 0.85 + player.rShow * 0.3;
-  scene.fog.near = 60 + zoom * 16; scene.fog.far = scene.fog.near + 220;
-  camera.position.lerp(new THREE.Vector3(player.x, 14 * zoom, player.z + 7 * zoom), Math.min(1, dt * 3));
+  // Kamera schräg von hinten (gut 50° Neigung), zoomt mit dem Loch heraus: das Loch bleibt etwa ein Fünftel der Bildbreite
+  const zoom = CAM.z0 + player.rShow * CAM.zr, camD = CAM.d * zoom;
+  scene.fog.near = 40 + camD * 1.6; scene.fog.far = scene.fog.near + 250;
+  camera.position.lerp(new THREE.Vector3(player.x, CAM.h * zoom, player.z + CAM.b * zoom), Math.min(1, dt * 3));
   camLook.lerp(new THREE.Vector3(player.x, 0, player.z - 0.5), Math.min(1, dt * 5));
   camera.lookAt(camLook);
   if (shakeT > 0) { shakeT -= dt; const a = shakeA * Math.min(1, shakeT / 0.25) * zoom;
@@ -799,10 +801,10 @@ function updateVisuals(dt, now) {
       arrow.firstElementChild.style.transform = `rotate(${Math.atan2(vy, vx)}rad)`; }
   } else arrow.style.display = 'none';
   // Schatten-Bereich folgt dem Spieler (schärfere Schatten als über die ganze Karte)
-  const ext = Math.round(28 + player.rShow * 4);
+  const ext = Math.round(10 + camD * 0.9), ahead = player.z - camD * 0.26;   // Mitte des sichtbaren Bodens liegt vor dem Loch
   const sc = sun.shadow.camera;
   if (sc.right !== ext) { sc.left = sc.bottom = -ext; sc.right = sc.top = ext; sc.updateProjectionMatrix(); }
-  sun.position.set(player.x + 35, 70, player.z + 25); sun.target.position.set(player.x, 0, player.z);
+  sun.position.set(player.x + 35, 70, ahead + 25); sun.target.position.set(player.x, 0, ahead);
   // Häuser zwischen Kamera und Loch durchsichtig machen (stufenweise, mit gemeinsamen Materialien)
   const H = camera.position.y, Dz = Math.max(1, camera.position.z - player.z);
   for (const o of objects) {

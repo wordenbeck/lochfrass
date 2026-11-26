@@ -16,7 +16,15 @@
     font-weight: 900; font-size: 22px; box-shadow: 0 4px 0 #1d2433; }
   #top { display: flex; gap: 10px; align-items: center; }
   #time.warn { background: #ff5a4e; color: #fff; }
-  #sizeBox { margin-top: 12px; width: 230px; }
+  #sizeBox, #bossBox { margin-top: 12px; width: 230px; }
+  #bossTxt { font-weight: 900; font-size: 14px; color: #ffd23f; -webkit-text-stroke: 4px #1d2433; paint-order: stroke fill; }
+  #bossBar { background: #ff5a4e !important; }
+  #bossBox.ready #bossBar { background: #ffd23f !important; }
+  #arrow { position: fixed; width: 0; height: 0; display: none; pointer-events: none; }
+  #arrow i { position: absolute; left: -26px; top: -22px; width: 52px; height: 44px; background: #ffd23f;
+    clip-path: polygon(0 20%, 55% 20%, 55% 0, 100% 50%, 55% 100%, 55% 80%, 0 80%); filter: drop-shadow(0 0 0 #1d2433); }
+  #arrow b { position: absolute; left: -40px; top: 24px; width: 80px; text-align: center; font-size: 13px; font-weight: 900; color: #fff;
+    -webkit-text-stroke: 4px #1d2433; paint-order: stroke fill; }
   #tier { font-weight: 900; font-size: 16px; color: #fff; -webkit-text-stroke: 4px #1d2433; paint-order: stroke fill; }
   .bar { height: 14px; background: #fff; border: 3px solid #1d2433; border-radius: 99px; overflow: hidden; margin-top: 4px; }
   .bar i { display: block; height: 100%; width: 0; background: #2fd3b9; transition: width .2s; }
@@ -76,9 +84,11 @@
 <div id="hud">
   <div id="top"><span class="pill" id="time">2:30</span><span class="pill" id="score">0</span></div>
   <div id="sizeBox"><div id="tier">Kanaldeckel</div><div class="bar"><i id="bar"></i></div></div>
+  <div id="bossBox"><div id="bossTxt">Endboss: Riesenturm</div><div class="bar"><i id="bossBar"></i></div></div>
 </div>
 <div id="board"></div>
 <div id="msg"></div>
+<div id="arrow"><i></i><b>ENDBOSS</b></div>
 <div id="joy"><div id="knob"></div></div>
 <div id="overlay"><div class="card" id="card"></div></div>
 
@@ -89,21 +99,22 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 
 // ================= Einstellungen =================
-const MAP = 90;                                // Karte geht von -90 bis +90
-const ROADS = [-60, -30, 0, 30, 60];
-const BLOCKS = [-75, -45, -15, 15, 45, 75];
-const ROUND_TIME = 150;
+const MAP = 120;                               // Karte geht von -120 bis +120
+const ROADS = [-90, -60, -30, 0, 30, 60, 90];
+const BLOCKS = [-105, -75, -45, -15, 15, 45, 75, 105];
+const ROUND_TIME = 600;                        // 10 Minuten
+const R0 = 0.6;                                // Startgröße des Lochs
 const LEVEL = 1;
 const INK = '#1d2433';                          // Konturfarbe
 
 // Schwierigkeit: s0/s1 = Tempo der Gegner am Anfang/Ende der Anlaufzeit (ramp, Sekunden)
 const DIFFS = {
-  leicht: { label: 'Leicht', bots: 3, s0: 0.35, s1: 0.65, ramp: 120, huntPlayer: false, huntDelay: 999, smart: 0.5,
-    stars: [0.08, 0.16, 0.26], desc: 'Gegner bleiben gemütlich und jagen dich nie.' },
-  normal: { label: 'Normal', bots: 3, s0: 0.45, s1: 0.85, ramp: 90, huntPlayer: true, huntDelay: 60, smart: 0.8,
-    stars: [0.12, 0.22, 0.34], desc: 'Gegner starten langsam, werden nach und nach flotter und jagen dich ab Minute 1.' },
-  schwer: { label: 'Schwer', bots: 4, s0: 0.6, s1: 1.0, ramp: 45, huntPlayer: true, huntDelay: 20, smart: 1,
-    stars: [0.15, 0.27, 0.4], desc: '4 Gegner, schnell auf Tempo, jagen dich schon nach 20 Sekunden.' },
+  leicht: { label: 'Leicht', bots: 3, s0: 0.35, s1: 0.65, ramp: 420, huntPlayer: false, huntDelay: 9999, smart: 0.5,
+    stars: [0.1, 0.2, 0.35], desc: 'Gegner bleiben gemütlich und jagen dich nie.' },
+  normal: { label: 'Normal', bots: 3, s0: 0.45, s1: 0.85, ramp: 300, huntPlayer: true, huntDelay: 180, smart: 0.8,
+    stars: [0.15, 0.3, 0.5], desc: 'Gegner starten langsam, werden nach und nach flotter und jagen dich ab Minute 3.' },
+  schwer: { label: 'Schwer', bots: 4, s0: 0.6, s1: 1.0, ramp: 150, huntPlayer: true, huntDelay: 60, smart: 1,
+    stars: [0.2, 0.4, 0.6], desc: '4 Gegner, schnell auf Tempo, jagen dich schon ab Minute 1.' },
 };
 const SKINS = [
   { id: 'minze', name: 'Minze', stars: 0, cols: ['#2fd3b9'] },
@@ -115,9 +126,10 @@ const SKINS = [
   { id: 'galaxie', name: 'Galaxie', stars: 9, cols: ['#6a5cff', '#00e5ff', '#ff4fd8'], spin: 1.2, pulse: true },
 ];
 const BOTS = [['Mampf', '#ff8a3d'], ['Schlürf', '#ffd23f'], ['Krümel', '#9b6bff'], ['Happs', '#4f8bff']];
-const TIERS = [[1.2, 'Kanaldeckel'], [2.5, 'Gully'], [4.5, 'Krater'], [7, 'Schlund'], [10, 'Abgrund'], [14, 'Schwarzes Loch'], [999, '']];
-let GROWTH = 0.15;
-const radiusFor = m => 1.2 + Math.sqrt(m) * GROWTH;
+const TIERS = [[0.6, 'Kanaldeckel'], [1.2, 'Gully'], [2.2, 'Krater'], [4.5, 'Schlund'], [8, 'Abgrund'], [11, 'Schwarzes Loch'], [999, '']];
+let GROWTH = 0.031;
+let GROWTH_EXP = 0.625;
+const radiusFor = m => R0 + GROWTH * Math.pow(m, GROWTH_EXP);
 
 // ================= Speicher (nur lokal auf dem Gerät) =================
 const LS = {
@@ -156,7 +168,7 @@ function canvasTex(size, draw, h = size) {
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 scene.background = canvasTex(4, (x, w, h) => { const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#4fb8ff'); g.addColorStop(1, '#d6f1ff'); x.fillStyle = g; x.fillRect(0, 0, w, h); }, 256);
-scene.fog = new THREE.Fog(0xd6f1ff, 90, 230);
+scene.fog = new THREE.Fog(0xd6f1ff, 100, 300);
 const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.5, 500);
 
 scene.add(new THREE.HemisphereLight(0xffffff, 0xb5d99a, 1.6));
@@ -241,7 +253,10 @@ const C = {
 const objects = [], houseRects = [];
 function add(obj, x, z, r, v, h, extra = {}) {
   obj.position.set(x, 0, z); scene.add(obj);
-  const o = { g: obj, r, v, h, falling: false, ...extra }; objects.push(o); return o;
+  // L/W = halbe Länge/Breite der Grundfläche, s = „Schluckgröße“ (wie groß das Loch mindestens sein muss)
+  const o = { g: obj, r, v, h, falling: false, state: null, L: r * 0.9, W: r * 0.9, ...extra };
+  o.s = extra.s || Math.max(o.W, o.L * 0.7) * 1.1;
+  objects.push(o); return o;
 }
 function person(x, z) {
   const m = build([P(GE.legs, pick(C.pants), 0, 0.3, 0), P(GE.torso, pick(C.shirt), 0, 0.8, 0),
@@ -260,16 +275,27 @@ function hydrant(x, z) {
   return add(build([P(GE.cyl, '#ff4136', 0, 0.3, 0, 0.18, 0.6, 0.18), P(GE.sph, '#ff4136', 0, 0.6, 0, 0.18, 0.14, 0.18),
     P(GE.cyl, '#ffd23f', 0, 0.38, 0, 0.08, 0.5, 0.08, 0, 0, Math.PI / 2)]), x, z, 0.3, 1, 0.75);
 }
+function small(x, z) {   // Hütchen, Briefkasten, Blumenkübel, Schild
+  const k = rnd();
+  if (k < 0.3) return add(build([P(GE.rbox, '#ff8a3d', 0, 0.04, 0, 0.5, 0.08, 0.5), P(GE.cone, '#ff8a3d', 0, 0.35, 0, 0.2, 0.6, 0.2),
+    P(GE.cyl, '#ffffff', 0, 0.33, 0, 0.14, 0.1, 0.14)]), x, z, 0.27, 1, 0.65);
+  if (k < 0.55) return add(build([P(GE.cylLo, '#3a4152', 0, 0.45, 0, 0.05, 0.9, 0.05), P(GE.rbox, '#ffd23f', 0, 1.0, 0, 0.42, 0.4, 0.3),
+    P(GE.rbox, INK, 0, 1.05, 0.16, 0.25, 0.05, 0.02)]), x, z, 0.3, 1, 1.2);
+  if (k < 0.8) return add(build([P(GE.cyl, '#d9774a', 0, 0.25, 0, 0.32, 0.5, 0.32), P(GE.sph, pick(C.leaf), 0, 0.6, 0, 0.3, 0.22, 0.3),
+    P(GE.sph, pick(['#ff7ac6', '#ffd23f', '#ff5a4e', '#ffffff']), 0.1, 0.78, 0.05, 0.09), P(GE.sph, pick(['#ff7ac6', '#9b6bff', '#ffffff']), -0.12, 0.74, -0.04, 0.08)]), x, z, 0.35, 1, 0.9);
+  const m = build([P(GE.cylLo, '#9aa3b5', 0, 0.9, 0, 0.05, 1.8, 0.05), P(GE.cyl, pick(['#4f8bff', '#ff5a4e', '#ffd23f']), 0, 1.9, 0, 0.32, 0.06, 0.32, Math.PI / 2)]);
+  m.rotation.y = R(0, 6.28); return add(m, x, z, 0.33, 1, 2.2);
+}
 function lamp(x, z) {
   const m = build([P(GE.cyl, '#3a4152', 0, 0.18, 0, 0.17, 0.36, 0.17), P(GE.cylLo, '#3a4152', 0, 1.75, 0, 0.07, 3.4, 0.07),
     P(GE.rbox, '#3a4152', 0.28, 3.4, 0, 0.65, 0.09, 0.09), P(GE.sph, '#fff3a8', 0.55, 3.25, 0, 0.27, 0.2, 0.27),
     P(GE.cone, '#3a4152', 0.55, 3.42, 0, 0.32, 0.18, 0.32)]);
-  m.rotation.y = R(0, 6.28); return add(m, x, z, 0.5, 3, 3.6);
+  m.rotation.y = R(0, 6.28); return add(m, x, z, 0.5, 3, 3.6, { L: 0.75, W: 0.4 });
 }
 function bench(x, z, rot = 0) {
   const m = build([P(GE.rbox, '#d98c45', 0, 0.45, 0, 1.6, 0.12, 0.52), P(GE.rbox, '#d98c45', 0, 0.75, -0.22, 1.6, 0.42, 0.1),
     P(GE.rbox, '#3a4152', -0.65, 0.22, 0, 0.1, 0.45, 0.46), P(GE.rbox, '#3a4152', 0.65, 0.22, 0, 0.1, 0.45, 0.46)]);
-  m.rotation.y = rot; return add(m, x, z, 0.9, 3, 1);
+  m.rotation.y = rot; return add(m, x, z, 0.9, 3, 1, { L: 0.82, W: 0.28 });
 }
 function tree(x, z) {
   const s = R(1, 1.5), g = pick(C.leaf), g2 = shade(g, 0.85);
@@ -298,7 +324,7 @@ function car(x, z, rot, drive) {
     parts.push(P(GE.cyl, '#2a2d36', wx, 0.4, wz, 0.4, 0.3, 0.4, Math.PI / 2)); parts.push(P(GE.cyl, '#d9dde5', wx, 0.4, wz * 1.07, 0.18, 0.3, 0.18, Math.PI / 2));
   }
   const m = build(parts); m.rotation.y = rot;
-  return add(m, x, z, 1.75, 10, 1.75, drive ? { drive } : {});
+  return add(m, x, z, 1.75, 10, 1.75, { L: 1.75, W: 0.88, s: 1.4, ...(drive ? { drive } : {}) });
 }
 function fountain(x, z) {
   return add(build([P(GE.cyl, '#cfd6e0', 0, 0.3, 0, 2.1, 0.6, 2.1), P(GE.cyl, '#5cc8f5', 0, 0.58, 0, 1.85, 0.08, 1.85),
@@ -346,7 +372,36 @@ function house(x, z, w, d, h, opts = {}) {
   const extraMat = vcMat.clone();
   const g = new THREE.Group(); g.add(walls, build(parts, extraMat));
   houseRects.push([x - w / 2 - 0.6, x + w / 2 + 0.6, z - d / 2 - 0.6, z + d / 2 + 1.2]);
-  return add(g, x, z, Math.hypot(w, d) / 2 * 0.85, Math.round(w * d * top / 10), top, { mats: [wallMat, extraMat], fade: 1 });
+  return add(g, x, z, Math.hypot(w, d) / 2 * 0.85, Math.round(w * d * top / 10), top,
+    { mats: [wallMat, extraMat], fade: 1, L: Math.max(w, d) / 2 + 0.3, W: Math.min(w, d) / 2 + 0.3, longZ: d > w });
+}
+
+// Endboss: riesiges Hochhaus, nur der Spieler kann es schlucken
+const GLASS = canvasTex(128, (x, s) => {
+  const g = x.createLinearGradient(0, 0, s, s); g.addColorStop(0, '#5fb4f0'); g.addColorStop(1, '#9ad8ff'); x.fillStyle = g; x.fillRect(0, 0, s, s);
+  x.fillStyle = 'rgba(255,255,255,.35)'; x.beginPath(); x.moveTo(10, 128); x.lineTo(60, 0); x.lineTo(80, 0); x.lineTo(30, 128); x.fill();
+  x.fillStyle = '#eef3f8'; x.fillRect(0, 0, s, 10); x.fillRect(0, 0, 8, s); x.fillRect(64, 0, 5, s);
+  x.strokeStyle = INK; x.lineWidth = 3; x.strokeRect(0, 0, s, s);
+});
+let BOSS = null;
+function boss(x, z) {
+  const g = new THREE.Group(), mats = [], parts = [];
+  parts.push(P(GE.rbox, '#cfd6e0', 0, 1.5, 0, 15, 3, 15), P(GE.rbox, '#3a4152', 0, 1.4, 7.55, 4, 2.6, 0.3),
+    P(GE.rbox, '#ff5a4e', 0, 3.1, 8.3, 5.5, 0.25, 1.6));
+  let y = 3;
+  for (const [s, hh] of [[13, 22], [10.5, 18], [8, 14]]) {
+    const t = GLASS.clone(); t.needsUpdate = true; t.repeat.set(Math.round(s / 2), Math.round(hh / 2.5));
+    const m = toon({ map: t }); mats.push(m);
+    const mesh = new THREE.Mesh(new RoundedBoxGeometry(s, hh, s, 2, 0.4).translate(0, y + hh / 2, 0), m);
+    mesh.castShadow = mesh.receiveShadow = true; g.add(mesh);
+    y += hh; parts.push(P(GE.rbox, '#e9eef5', 0, y, 0, s + 0.8, 0.7, s + 0.8));
+  }
+  parts.push(P(GE.cone, '#ffd23f', 0, y + 3, 0, 4.5, 6, 4.5), P(GE.cylLo, '#3a4152', 0, y + 8.5, 0, 0.25, 6, 0.25),
+    P(GE.sph, '#ff4136', 0, y + 11.6, 0, 0.7));
+  const em = vcMat.clone(); mats.push(em); g.add(build(parts, em));
+  houseRects.push([x - 8, x + 8, z - 8, z + 9]);
+  BOSS = add(g, x, z, 10.6, 1500, y + 12.3, { mats, fade: 1, boss: true, L: 7.5, W: 7.5, s: 10 });
+  return BOSS;
 }
 
 // ================= Welt aufbauen: Level 1 „Vorstadt“ =================
@@ -391,10 +446,15 @@ for (const rc of ROADS) { flat(W, 7, 0, rc, 0.02, TEX.asphalt, 8); flat(7, W, rc
 const onRoad = (x, z, pad = 5.2) => ROADS.some(r => Math.abs(x - r) < pad || Math.abs(z - r) < pad);
 const inHouse = (x, z) => houseRects.some(([a, b, c, d]) => x > a && x < b && z > c && z < d);
 const freeSpot = (bx, bz, spread = 9.5) => { for (let i = 0; i < 12; i++) { const x = bx + R(-spread, spread), z = bz + R(-spread, spread); if (!inHouse(x, z)) return [x, z]; } return null; };
-const PLAZAS = ['15,-15', '-45,45', '75,-45'];
+const PLAZAS = ['15,-15', '-45,45', '75,-45', '-75,-75', '105,75', '-105,15'];
 for (const bx of BLOCKS) for (const bz of BLOCKS) {
   const cd = Math.max(Math.abs(bx), Math.abs(bz));
   const r0 = rnd();
+  if (bx === -15 && bz === -15) {   // Endboss-Block
+    boss(bx, bz);
+    for (const [ox, oz] of [[-10, -10], [10, -10], [-10, 10], [10, 10]]) tree(bx + ox, bz + oz);
+    continue;
+  }
   const kind = PLAZAS.includes(bx + ',' + bz) ? 'plaza' : r0 < 0.2 ? 'park' : r0 < 0.28 ? 'parking' : (cd <= 15 && r0 < 0.75) || (cd <= 45 && r0 < 0.42) ? 'tower' : 'houses';
   if (kind === 'houses') {
     for (const ox of [-5, 5]) for (const oz of [-5, 5]) {
@@ -429,13 +489,14 @@ for (const bx of BLOCKS) for (const bz of BLOCKS) {
 }
 for (const rc of ROADS) {   // Gehweg-Ausstattung + parkende Autos
   let step = 0;
-  for (let t = -MAP + 3; t < MAP - 2; t += 8, step++) {
+  for (let t = -MAP + 3; t < MAP - 2; t += 10, step++) {
     if (ROADS.some(r => Math.abs(t - r) < 7)) continue;
     const s = step % 2 ? 1 : -1;
     lamp(t, rc + s * 4.4); lamp(rc + s * 4.4, t);
     if (rnd() < 0.35) bin(t + 2, rc - s * 4.4);
     if (rnd() < 0.35) bin(rc - s * 4.4, t + 2);
     if (rnd() < 0.15) hydrant(t - 2, rc + s * 4.5);
+    if (rnd() < 0.3) small(t + 4, rc + s * 4.2); if (rnd() < 0.3) small(rc - s * 4.2, t - 4);
   }
   for (let t = -MAP + 6; t < MAP - 4; t += R(8, 13)) {
     if (ROADS.some(r => Math.abs(t - r) < 9)) continue;
@@ -443,15 +504,20 @@ for (const rc of ROADS) {   // Gehweg-Ausstattung + parkende Autos
     if (rnd() < 0.45) car(rc + pick([-1, 1]) * 2.4, t, Math.PI / 2);
   }
 }
-for (let i = 0; i < 14; i++) {   // fahrende Autos
+for (let i = 0; i < 22; i++) {   // fahrende Autos
   const rc = pick(ROADS), dir = pick([-1, 1]), t = R(-MAP, MAP), lane = rc + dir * 0.9;
   if (rnd() < 0.5) car(t, lane, dir > 0 ? 0 : Math.PI, { ax: 'x', v: dir * R(4, 6) });
   else car(lane, t, dir > 0 ? -Math.PI / 2 : Math.PI / 2, { ax: 'z', v: dir * R(4, 6) });
 }
-for (let n = 0; n < 230;) {   // Menschen
+for (let n = 0; n < 480;) {   // Menschen
   const x = R(-MAP + 2, MAP - 2), z = R(-MAP + 2, MAP - 2);
   if (onRoad(x, z, 3.6) || inHouse(x, z)) continue;
   person(x, z); n++;
+}
+for (let n = 0; n < 260;) {   // Kleinkram verstreut
+  const x = R(-MAP + 2, MAP - 2), z = R(-MAP + 2, MAP - 2);
+  if (onRoad(x, z, 3.6) || inHouse(x, z)) continue;
+  small(x, z); n++;
 }
 const TOTAL = objects.length;
 const TOTAL_VALUE = objects.reduce((s, o) => s + o.v, 0);
@@ -510,7 +576,7 @@ function makeHole(name, skin, isPlayer) {
   const glowMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, toneMapped: false }); glowMat.userData = NO_OUTLINE;
   const glow = new THREE.Mesh(GLOW, glowMat); glow.rotation.x = -Math.PI / 2; glow.position.y = 0.06;
   grp.add(mask, well, bottom, rim, glow); scene.add(grp);
-  const h = { name, skin, isPlayer, grp, rim, glow, x: 0, z: 0, mass: 0, score: 0, r: 1.2, rShow: 1.2, alive: true, dead: 0, grace: 2, think: 0, tx: 0, tz: 0 };
+  const h = { name, skin, isPlayer, grp, rim, glow, x: 0, z: 0, mass: 0, score: 0, r: R0, rShow: R0, px: 0, pz: 0, speed: 0, alive: true, dead: 0, grace: 2, think: 0, tx: 0, tz: 0 };
   paintRim(h);
   if (!isPlayer) { h.tag = document.createElement('div'); h.tag.className = 'tag'; h.tag.textContent = name; document.body.appendChild(h.tag); }
   holes.push(h); return h;
@@ -520,7 +586,7 @@ function spawn(h) {
     h.x = rand(-MAP + 15, MAP - 15); h.z = rand(-MAP + 15, MAP - 15);
     if (holes.every(o => o === h || Math.hypot(o.x - h.x, o.z - h.z) > 35)) break;
   }
-  h.mass = 0; h.r = h.rShow = 1.2; h.alive = true; h.grace = 2.5; h.grp.visible = true;
+  h.mass = 0; h.r = h.rShow = R0; h.alive = true; h.grace = 2.5; h.grp.visible = true;
 }
 const player = makeHole('Du', SKINS.find(s => s.id === skinId), true);
 player.x = 0; player.z = 4;
@@ -572,7 +638,7 @@ function think(b, smart, mayHuntPlayer) {
   if (Math.random() > smart) { b.tx = clamp(b.x + rand(-20, 20), -MAP, MAP); b.tz = clamp(b.z + rand(-20, 20), -MAP, MAP); return; }
   let best = null, bestVal = 0;
   for (const o of objects) {   // sonst: lohnendstes Objekt in der Nähe
-    if (o.falling || o.r > b.r * 0.85) continue;
+    if (o.falling || o.state || o.boss || o.s > b.r * 0.9 || o.L > b.r * 1.02) continue;
     const d = Math.hypot(o.g.position.x - b.x, o.g.position.z - b.z);
     const val = o.v / (d + 4);
     if (val > bestVal) { bestVal = val; best = o; }
@@ -602,6 +668,11 @@ function updateHud() {
   $('tier').textContent = TIERS[i][1];
   $('bar').style.width = clamp((player.rShow - TIERS[i][0]) / (TIERS[i + 1][0] - TIERS[i][0]), 0, 1) * 100 + '%';
   $('bar').style.background = skinCss(player.skin);
+  const need = BOSS.s / 0.95, ready = player.rShow >= need;
+  if (ready && running && !bossEaten && !bossReadyShown) { bossReadyShown = true; flash('Bereit für den Endboss!'); }
+  $('bossBox').classList.toggle('ready', ready);
+  $('bossTxt').textContent = bossEaten ? 'Endboss geschluckt!' : ready ? 'Endboss: jetzt schlucken!' : 'Endboss: Riesenturm';
+  $('bossBar').style.width = (bossEaten ? 100 : clamp(player.rShow / need, 0, 1) * 100) + '%';
   board.innerHTML = [...holes].sort((a, b) => b.score - a.score).map(h =>
     `<div class="${h.isPlayer ? 'me' : ''}"><span><span class="dot" style="background:${skinCss(h.skin)}"></span>${h.name}</span><span>${h.score}</span></div>`).join('');
 }
@@ -626,6 +697,7 @@ function renderStart() {
 
 // ================= Spielablauf =================
 let running = false, timeLeft = ROUND_TIME, eaten = 0, hudT = 0, autopilot = false;
+let shakeT = 0, bossEaten = false, bossReadyShown = false;
 const camLook = new THREE.Vector3(player.x, 0, player.z);
 camera.position.set(player.x, 14, player.z + 8);
 
@@ -636,7 +708,7 @@ function startGame() {
 }
 function eat(h, o) {
   h.mass += o.v; h.score += o.v;
-  if (h.isPlayer) { eaten++; popup('+' + o.v, h); }
+  if (h.isPlayer) { eaten++; popup('+' + o.v, h, o.boss ? '#ffd23f' : '#fff'); }
 }
 
 function update(dt) {
@@ -663,6 +735,7 @@ function update(dt) {
   }
   for (const h of holes) {
     if (!h.alive) { h.dead -= dt; if (h.dead <= 0) { spawn(h); if (h.isPlayer) flash('Weiter geht\'s!'); } continue; }
+    h.speed = dt > 0 ? Math.min(30, Math.hypot(h.x - h.px, h.z - h.pz) / dt) : 0; h.px = h.x; h.pz = h.z;
     h.grace -= dt; h.r = radiusFor(h.mass);
     h.rShow += (h.r - h.rShow) * Math.min(1, dt * 4);
   }
@@ -680,12 +753,13 @@ function update(dt) {
     const o = objects[i], p = o.g.position;
     if (o.falling) {
       const h = o.by; if (h.alive) { o.fx = h.x; o.fz = h.z; }
-      o.vy -= 38 * dt; p.y += o.vy * dt;
+      o.vy -= (o.boss ? 9 : 38) * dt; p.y += o.vy * dt;
       const kk = Math.min(1, dt * 4); p.x += (o.fx - p.x) * kk; p.z += (o.fz - p.z) * kk;
       o.g.rotateOnWorldAxis(o.axis, dt * 2.6);
       if (p.y < -(o.h + 6)) { scene.remove(o.g); objects.splice(i, 1); eat(h, o); }
       continue;
     }
+    if (o.state) { tipUpdate(o, dt); continue; }
     if (o.walk) {
       const w = o.walk; w.t -= dt; w.ph += dt * 10;
       if (w.t < 0 || Math.abs(p.x) > MAP - 2 || Math.abs(p.z) > MAP - 2) {
@@ -700,15 +774,79 @@ function update(dt) {
       else { p.z += o.drive.v * dt; if (Math.abs(p.z) > MAP + 2) p.z = -Math.sign(p.z) * MAP; }
     }
     for (const h of holes) {
-      if (!h.alive || o.r >= h.rShow * 0.92) continue;
-      const dx = p.x - h.x, dz = p.z - h.z, d = Math.hypot(dx, dz);
-      if (d < h.rShow - o.r * 0.35) {
-        o.falling = true; o.by = h; o.vy = 0; o.fx = h.x; o.fz = h.z; p.y = 0;
-        o.axis = d > 0.01 ? new THREE.Vector3(-dz, 0, dx).normalize() : new THREE.Vector3(1, 0, 0);
-        break;
-      } else if (d < h.rShow + o.r * 0.4) { p.x -= dx / d * dt * 1.5; p.z -= dz / d * dt * 1.5; }   // wackelt Richtung Loch
+      if (!h.alive || (o.boss && !h.isPlayer)) continue;
+      const R = h.rShow, dx = p.x - h.x, dz = p.z - h.z, d = Math.hypot(dx, dz);
+      if (d > R + o.L) continue;
+      const fits = o.s < R * 0.95;
+      if (fits && d + o.L * 0.8 < R) { p.y = 0; startFall(o, h); break; }                 // komplett über dem Loch: fällt direkt
+      if (d < R && (fits || o.W < R * 1.4)) { p.y = 0; startTip(o, h); break; }          // Mitte über dem Loch: kippt über die Kante
+      if (fits && d < R + o.L * 0.5) { p.x -= dx / d * dt * 1.5; p.z -= dz / d * dt * 1.5; }   // an der Kante: wackelt Richtung Loch
     }
   }
+}
+
+// ---------- Physik light: Kippen, Verkanten, Verhaken ----------
+const _pv = new THREE.Vector3(), _ax = new THREE.Vector3(), _qt = new THREE.Quaternion(), _tv = new THREE.Vector3();
+let jamHintShown = false;
+function startFall(o, h) {
+  o.falling = true; o.state = null; o.by = h; o.vy = o.vy || 0; o.fx = h.x; o.fz = h.z;
+  const dx = o.g.position.x - h.x, dz = o.g.position.z - h.z, d = Math.hypot(dx, dz);
+  o.axis = d > 0.01 ? new THREE.Vector3(-dz, 0, dx).normalize() : new THREE.Vector3(1, 0, 0);
+  if (o.boss) { shakeT = 4; bossEaten = true; flash('ENDBOSS GESCHLUCKT!'); }
+}
+function startTip(o, h) {
+  Object.assign(o, { state: 'tip', by: h, theta: 0, thv: 0, jam: false, slip: false, shake: 0, wob: 0, vy: 0,
+    yaw: o.g.rotation.y, yawQ: o.g.quaternion.clone(), base: o.g.position.clone() });
+}
+// wie lang ist das Objekt in Kipprichtung? (ein Auto quer kippt anders als längs)
+function effLen(o) {
+  const ax = o.longZ ? [Math.sin(o.yaw), Math.cos(o.yaw)] : [Math.cos(o.yaw), -Math.sin(o.yaw)];
+  const c = Math.min(1, Math.abs(ax[0] * o.dir[0] + ax[1] * o.dir[1]));
+  return c * o.L + Math.sqrt(1 - c * c) * o.W;
+}
+function tipUpdate(o, dt) {
+  const h = o.by, b = o.base;
+  if (h.alive) {
+    const dx = b.x - h.x, dz = b.z - h.z, d = Math.hypot(dx, dz) || 0.001;
+    o.dir = [dx / d, dz / d]; o.d = d; o.R = h.rShow; o.cx = h.x; o.cz = h.z;
+  }
+  const R = o.R, fits = o.s < R * 0.95;
+  if (!h.alive || o.d > R + o.W * 0.2) {                 // Loch ist weggefahren: Objekt kippt zurück
+    o.thv = 0; o.wob = 0; o.theta = Math.max(0, o.theta - dt * 2.5);
+    if (o.theta === 0) { o.state = null; o.g.quaternion.copy(o.yawQ); o.g.position.copy(b); return; }
+  } else if (fits && o.d + o.L * 0.8 < R) {               // inzwischen ganz über dem Loch
+    applyTip(o); o.vy = -2; startFall(o, h); return;
+  } else if (!fits) {                                     // zu groß: verhakt sich am Rand und wackelt
+    o.theta += (0.14 - o.theta) * Math.min(1, dt * 6);
+    o.wob = h.speed > 1 ? (Math.random() - 0.5) * 0.05 : 0;
+  } else {
+    const Leff = effLen(o);
+    const jamA = (!o.slip && Leff > R * 0.98) ? Math.acos(clamp(R / Leff, 0, 1)) : 99;   // Winkel, bei dem das andere Ende an die Wand stößt
+    o.thv += (3 + 6 * o.theta) * dt; o.theta += o.thv * dt;
+    if (o.theta >= jamA) {                                // verkantet!
+      o.theta = jamA; o.thv = 0;
+      if (!o.jam && h.isPlayer && !jamHintShown) { jamHintShown = true; flash('Verkantet! Hin und her wackeln'); }
+      o.jam = true;
+      o.shake += h.speed * dt;
+      o.wob = h.speed > 1 ? (Math.random() - 0.5) * 0.09 : 0;
+      if (o.shake > 1.5 + Leff * 0.8) { o.slip = true; o.jam = false; }
+    } else {
+      o.jam = false; o.wob = 0;
+      const k = Math.min(1, dt * (0.6 + o.theta)) * 0.5;  // rutscht Richtung Mitte
+      b.x += (o.cx - b.x) * k; b.z += (o.cz - b.z) * k;
+    }
+    if (o.theta > 1.2) { applyTip(o); o.vy = -3; startFall(o, h); return; }
+  }
+  applyTip(o);
+}
+// dreht das Objekt um den Punkt an der Lochkante
+function applyTip(o) {
+  const [ux, uz] = o.dir;
+  _pv.set(o.cx + ux * o.R, 0, o.cz + uz * o.R);
+  _ax.set(-uz, 0, ux);
+  _qt.setFromAxisAngle(_ax, o.theta + o.wob);
+  o.g.quaternion.copy(_qt).multiply(o.yawQ);
+  o.g.position.copy(_tv.copy(o.base).sub(_pv).applyQuaternion(_qt).add(_pv));
 }
 
 function updateVisuals(dt, now) {
@@ -717,10 +855,25 @@ function updateVisuals(dt, now) {
     if (h.skin.spin) { h.rim.rotation.z += dt * h.skin.spin; h.glow.rotation.z = h.rim.rotation.z; }
     h.glow.material.opacity = h.skin.pulse ? 0.55 + 0.45 * Math.sin(now / 180) : 1;
   }
-  const zoom = 0.8 + player.rShow * 0.3;
+  const zoom = 0.85 + player.rShow * 0.3;
   camera.position.lerp(new THREE.Vector3(player.x, 14 * zoom, player.z + 7 * zoom), Math.min(1, dt * 3));
   camLook.lerp(new THREE.Vector3(player.x, 0, player.z - 0.5), Math.min(1, dt * 5));
   camera.lookAt(camLook);
+  if (shakeT > 0) { shakeT -= dt; const a = Math.min(1, shakeT) * 0.6;
+    camera.position.x += (Math.random() - 0.5) * a; camera.position.y += (Math.random() - 0.5) * a; }
+  // Pfeil zum Endboss, sobald du groß genug bist und er nicht im Bild ist
+  const arrow = $('arrow');
+  if (running && !bossEaten && player.rShow >= BOSS.s / 0.95) {
+    const bp = new THREE.Vector3(BOSS.g.position.x, 0, BOSS.g.position.z).project(camera);
+    const cx = innerWidth / 2, cy = innerHeight / 2;
+    let vx = (bp.x + 1) / 2 * innerWidth - cx, vy = (1 - bp.y) / 2 * innerHeight - cy;
+    if (bp.z > 1) { vx = -vx; vy = -vy; }
+    const onScreen = bp.z < 1 && Math.abs(vx) < cx - 60 && Math.abs(vy) < cy - 60;
+    if (onScreen) arrow.style.display = 'none';
+    else { const k = Math.min((cx - 60) / Math.abs(vx || 1), (cy - 70) / Math.abs(vy || 1));
+      arrow.style.display = 'block'; arrow.style.left = cx + vx * k + 'px'; arrow.style.top = cy + vy * k + 'px';
+      arrow.firstElementChild.style.transform = `rotate(${Math.atan2(vy, vx)}rad)`; }
+  } else arrow.style.display = 'none';
   // Schatten-Bereich folgt dem Spieler (schärfere Schatten als über die ganze Karte)
   const ext = Math.round(28 + player.rShow * 4);
   const sc = sun.shadow.camera;
@@ -732,7 +885,7 @@ function updateVisuals(dt, now) {
     if (!o.mats) continue;
     const p = o.g.position, dz = p.z - player.z;
     const lineH = H * Math.max(0, dz - o.r) / Dz;
-    const block = !o.falling && dz > -o.r && dz < Dz + o.r && o.h > lineH && Math.abs(p.x - player.x) < o.r + player.rShow + 1.5;
+    const block = !o.falling && dz > -o.r && dz < Dz + o.r && o.h > lineH && Math.abs(p.x - player.x) < o.r + player.rShow + (o.boss ? 10 : 1.5);
     const target = block ? 0.3 : 1;
     if (Math.abs(o.fade - target) < 0.01) continue;
     o.fade += (target - o.fade) * Math.min(1, dt * 8);
@@ -763,7 +916,7 @@ function endRound() {
   card.innerHTML = `
     <h1>Zeit um!</h1>
     <div class="stars">${[0, 1, 2].map(i => `<span class="${i < stars ? '' : 'off'}">★</span>`).join('')}</div>
-    <p><b>${player.score} Punkte</b> · Platz ${place} von ${holes.length} · ${D.label}<br>${Math.round(eaten / TOTAL * 100)}% der Vorstadt geschluckt</p>
+    <p><b>${player.score} Punkte</b> · Platz ${place} von ${holes.length} · ${D.label}<br>${Math.round(eaten / TOTAL * 100)}% der Vorstadt geschluckt${bossEaten ? ' · Endboss besiegt!' : ''}</p>
     ${unlocked.length ? `<div class="unlock">Neuer Skin: ${unlocked.map(s => s.name).join(', ')}!</div>` : ''}
     <div id="ranks">${ranked.map((h, i) => `<div><span>${i + 1}. ${h.name}</span><span>${h.score}</span></div>`).join('')}</div>
     <p class="small">Bestwert ${best} · Sterne ab ${thr.join(' / ')} Punkten</p>
@@ -786,7 +939,7 @@ requestAnimationFrame(loop);
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
 // Test-Helfer: __lf.sim(150, true) spielt eine Runde im Schnelldurchlauf mit Autopilot
-window.__lf = { player, holes, objects, TOTAL_VALUE, starScores, setGrowth: g => GROWTH = g,
+window.__lf = { player, holes, objects, TOTAL_VALUE, starScores, setGrowth: (g, e = GROWTH_EXP) => { GROWTH = g; GROWTH_EXP = e; },
   sim(sec, auto = false) { autopilot = auto; if (!running) startGame(); for (let t = 0; t < sec && running; t += 1 / 30) update(1 / 30); autopilot = false;
     return { score: player.score, r: player.r.toFixed(1), bots: bots.map(b => b.name + ':' + b.score), stars: starScores(), total: TOTAL_VALUE }; } };
 </script>

@@ -56,4 +56,4 @@ Rest: ca. 6–9 Sessions.
 
 ## Testen
 Lokal: Server „lochfrass“ aus `.claude/launch.json` (Port 8060).
-In der Browser-Konsole spielt `__lf.sim(150, true)` eine Runde im Schnelldurchlauf mit Autopilot.
+In der Browser-Konsole spielt `__lf.sim(600, true)` eine Runde im Schnelldurchlauf mit Autopilot.

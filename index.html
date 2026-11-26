@@ -44,9 +44,11 @@
     border-radius: 16px; padding: 8px 14px; min-width: 190px; font-weight: 800; font-size: 15px; box-shadow: 0 4px 0 #1d2433; }
   #board div { display: flex; justify-content: space-between; gap: 14px; padding: 2px 0; }
   #board .me { color: #0f9c86; }
-  #board .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; border: 2px solid #1d2433; vertical-align: -1px; }
+  .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; border: 2px solid #1d2433; vertical-align: -1px; }
   .tag { position: fixed; transform: translate(-50%, -100%); font-weight: 900; font-size: 15px; color: #fff;
     -webkit-text-stroke: 4px #1d2433; paint-order: stroke fill; white-space: nowrap; pointer-events: none; }
+  .tag.prey { color: #8ef05a; font-size: 17px; }
+  .tag.danger { color: #ff5a4e; font-size: 17px; }
   .pop { position: fixed; transform: translate(-50%, -50%); font-weight: 900; font-size: 26px; color: #fff;
     -webkit-text-stroke: 5px #1d2433; paint-order: stroke fill; pointer-events: none; animation: up .8s ease-out forwards; }
   @keyframes up { 0% { transform: translate(-50%, -50%) scale(.6); } 25% { transform: translate(-50%, -80%) scale(1.15); } 100% { transform: translate(-50%, -170%) scale(1); opacity: 0; } }
@@ -55,7 +57,7 @@
   #joy { position: fixed; width: 130px; height: 130px; margin: -65px 0 0 -65px; border-radius: 50%;
     border: 4px solid rgba(255,255,255,.85); background: rgba(255,255,255,.18); display: none; pointer-events: none; }
   #knob { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px; border-radius: 50%; background: #fff; border: 3px solid #1d2433; }
-  #overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px;
+  #overlay { position: fixed; inset: 0; z-index: 4; display: flex; align-items: center; justify-content: center; padding: 20px;
     background: rgba(20,40,70,.35); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
   .card { background: #fff; border: 4px solid #1d2433; border-radius: 30px; padding: 26px 34px; text-align: center; width: 560px; max-width: 100%;
     box-shadow: 0 10px 0 #1d2433; max-height: 100%; overflow: auto; }
@@ -87,6 +89,55 @@
   #ranks { text-align: left; margin: 10px auto; font-weight: 800; font-size: 17px; max-width: 260px; }
   #ranks div { display: flex; justify-content: space-between; padding: 2px 0; }
   .unlock { background: #fff6d6; border: 3px dashed #e0a400; border-radius: 14px; padding: 8px; font-weight: 900; margin: 10px 0; }
+  /* Ton-Knopf: liegt immer oben links, auch über dem Menü */
+  #snd { position: fixed; top: max(14px, env(safe-area-inset-top)); left: 18px; z-index: 5; pointer-events: auto; cursor: pointer;
+    width: 50px; height: 43px; padding: 0; display: flex; align-items: center; justify-content: center; font: inherit; color: #1d2433; }
+  #snd .x, #snd.off .w { display: none; }
+  #snd.off .x { display: inline; }
+  #top { padding-left: 60px; }
+  #time.warn { animation: beat 1s infinite; }
+  @keyframes beat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.14); } }
+  #pct, #alive { display: none; }
+  body[data-mode="solo"] #pct, body[data-mode="battle"] #alive { display: inline-block; }
+  body[data-mode="solo"] #board { display: none; }
+  #board .crown { display: inline-block; width: 19px; margin-right: 4px; vertical-align: -3px; }
+  #board .out { opacity: .45; text-decoration: line-through; }
+  /* Kill-Meldungen oben in der Mitte */
+  #feed { position: fixed; top: calc(max(14px, env(safe-area-inset-top)) + 56px); left: 50%; transform: translateX(-50%); display: flex;
+    flex-direction: column; align-items: center; gap: 6px; pointer-events: none; }
+  .kf { background: #fff; border: 3px solid #1d2433; border-radius: 999px; padding: 4px 14px; font-weight: 800; font-size: 15px;
+    box-shadow: 0 3px 0 #1d2433; white-space: nowrap; animation: kfin .25s ease-out; transition: opacity .4s; }
+  .kf.me { background: #fff1b8; }
+  .kf.bad { background: #ffd9d4; }
+  .kf.out { opacity: 0; }
+  @keyframes kfin { from { transform: translateY(-12px) scale(.8); opacity: 0; } }
+  #combo { position: fixed; left: 50%; top: 29%; transform: translate(-50%, -50%); font-weight: 900; font-size: 36px; color: #ff7ac6;
+    -webkit-text-stroke: 7px #1d2433; paint-order: stroke fill; pointer-events: none; opacity: 0; transition: opacity .25s; white-space: nowrap; }
+  #combo.on { opacity: 1; }
+  #combo.bump { animation: bump .35s ease-out; }
+  @keyframes bump { 40% { transform: translate(-50%, -50%) scale(1.4) rotate(-5deg); } }
+  #crown { position: fixed; width: 34px; transform: translate(-50%, -100%); pointer-events: none; display: none; }
+  #crown svg, .pcrown svg { display: block; width: 100%; animation: bob 1.4s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-4px); } }
+  #msg.pop2 { animation: msgpop .45s ease-out; }
+  @keyframes msgpop { 0% { transform: translate(-50%, -50%) scale(.4); } 60% { transform: translate(-50%, -50%) scale(1.12); } }
+  /* Siegerpodest */
+  .podium { display: flex; align-items: flex-end; justify-content: center; gap: 10px; margin: 12px 0 4px; }
+  .pod { width: 130px; font-weight: 900; }
+  .pod i { display: block; width: 46px; height: 46px; margin: 0 auto 4px; border-radius: 50%; border: 3px solid #1d2433; position: relative; }
+  .pod i::after { content: ''; position: absolute; inset: 6px; border-radius: 50%; background: #1d2433; }
+  .pod b { display: block; font-size: 17px; }
+  .pod.me b { color: #0f9c86; }
+  .pod small { display: block; font-size: 13px; color: #6b7385; margin-bottom: 4px; }
+  .step { border: 3px solid #1d2433; border-bottom: 0; border-radius: 14px 14px 0 0; font-size: 30px; color: #fff;
+    -webkit-text-stroke: 5px #1d2433; paint-order: stroke fill; padding-top: 6px; }
+  .p1 .step { height: 92px; background: #ffd23f; }
+  .p2 .step { height: 66px; background: #cfd6e0; }
+  .p3 .step { height: 46px; background: #f0a868; }
+  .pcrown { width: 44px; margin: 0 auto 2px; }
+  .big { font-size: 66px; font-weight: 900; color: #2fd3b9; -webkit-text-stroke: 9px #1d2433; paint-order: stroke fill; line-height: 1.1; margin-top: 8px; }
+  .btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .go.alt { background: #fff; color: #1d2433; -webkit-text-stroke: 0; }
 </style>
 <script type="importmap">{ "imports": {
   "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
@@ -94,16 +145,23 @@
 </head>
 <body>
 <div id="hud">
-  <div id="top"><span class="pill" id="time">2:30</span><span class="pill" id="score">0</span></div>
+  <div id="top"><span class="pill" id="time">2:00</span><span class="pill" id="score">0</span><span class="pill" id="pct">0%</span><span class="pill" id="alive">4 übrig</span></div>
   <div id="sizeBox"><div id="tier"><span id="stage">Stufe 1</span><small id="holeName">Kanaldeckel</small></div>
     <div class="bar"><i id="bar"></i><span id="xpTxt">0 / 0 XP</span></div><div id="next">Als Nächstes: Laternen & Bänke</div></div>
   <div id="bossBox"><div id="bossTxt">Endboss: Riesenturm</div><div class="bar"><i id="bossBar"></i></div></div>
 </div>
 <div id="board"></div>
+<div id="feed"></div>
+<div id="combo"></div>
+<div id="crown"></div>
 <div id="msg"></div>
 <div id="arrow"><i></i><b>ENDBOSS</b></div>
 <div id="joy"><div id="knob"></div></div>
 <div id="overlay"><div class="card" id="card"></div></div>
+<button class="pill" id="snd" aria-label="Ton an oder aus"><svg viewBox="0 0 24 24" width="24" height="24">
+  <path d="M3 9h4l5-4v14l-5-4H3z" fill="#1d2433" stroke="#1d2433" stroke-width="1.5" stroke-linejoin="round"/>
+  <path class="w" d="M15.5 8.5a5 5 0 0 1 0 7M18.3 5.8a9 9 0 0 1 0 12.4" stroke="#1d2433" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+  <path class="x" d="M15.5 9l6 6M21.5 9l-6 6" stroke="#ff5a4e" stroke-width="2.8" stroke-linecap="round"/></svg></button>
 
 <script type="module">
 import * as THREE from 'three';
@@ -112,39 +170,51 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 
 // ================= Einstellungen =================
-const MAP = 120;                               // Karte geht von -120 bis +120
-const ROADS = [-90, -60, -30, 0, 30, 60, 90];
-const BLOCKS = [-105, -75, -45, -15, 15, 45, 75, 105];
-const ROUND_TIME = 600;                        // 10 Minuten
+const MAP = 90;                                // Karte geht von -90 bis +90 (kompakt wie im Original)
+const ROADS = [-60, -30, 0, 30, 60];
+const BLOCKS = [-75, -45, -15, 15, 45, 75];
+const ROUND_TIME = 120;                        // 2 Minuten wie im Original
 const R0 = 0.6;                                // Startgröße des Lochs
 const LEVEL = 1;
 const INK = '#1d2433';                          // Konturfarbe
 
+// Spielmodi
+const MODES = {
+  klassik: { label: 'Klassik', desc: 'Sammle in 2 Minuten die meisten Punkte. Wer geschluckt wird, ist nach 3 Sekunden wieder dabei.' },
+  solo: { label: 'Solo', desc: 'Ohne Gegner: Schluck in 2 Minuten so viel von der Stadt wie möglich.' },
+  battle: { label: 'Battle', desc: 'Wer geschluckt wird, ist raus. Das letzte Loch gewinnt, bei Zeitablauf zählen die Punkte.' },
+};
+const SOLO_STARS = [0.2, 0.35, 0.55];            // Anteil der Stadt für 1/2/3 Sterne im Solo-Modus
 // Schwierigkeit: s0/s1 = Tempo der Gegner am Anfang/Ende der Anlaufzeit (ramp, Sekunden)
+// huntDelay = ab wann sie dich im Klassik-Modus jagen, battleHunt = dasselbe im Battle-Modus
+// stars = Punkte für 1/2/3 Sterne im Klassik-Modus, als Vielfaches des Stadtwerts (mit Combo geht es über 1 hinaus)
 const DIFFS = {
-  leicht: { label: 'Leicht', bots: 3, s0: 0.35, s1: 0.65, ramp: 420, huntPlayer: false, huntDelay: 9999, smart: 0.5,
-    stars: [0.1, 0.2, 0.35], desc: 'Gegner bleiben gemütlich und jagen dich nie.' },
-  normal: { label: 'Normal', bots: 3, s0: 0.45, s1: 0.85, ramp: 300, huntPlayer: true, huntDelay: 180, smart: 0.8,
-    stars: [0.15, 0.3, 0.5], desc: 'Gegner starten langsam, werden nach und nach flotter und jagen dich ab Minute 3.' },
-  schwer: { label: 'Schwer', bots: 4, s0: 0.6, s1: 1.0, ramp: 150, huntPlayer: true, huntDelay: 60, smart: 1,
-    stars: [0.2, 0.4, 0.6], desc: '4 Gegner, schnell auf Tempo, jagen dich schon ab Minute 1.' },
+  leicht: { label: 'Leicht', bots: 3, s0: 0.55, s1: 0.8, ramp: 90, huntPlayer: false, huntDelay: 999, battleHunt: 50, smart: 0.55,
+    stars: [0.32, 0.95, 2.1], desc: 'Gegner bleiben gemütlich und jagen dich nie.',
+    bdesc: 'Gegner bleiben gemütlich und jagen dich erst ab Sekunde 50.' },
+  normal: { label: 'Normal', bots: 3, s0: 0.65, s1: 0.92, ramp: 60, huntPlayer: true, huntDelay: 40, battleHunt: 30, smart: 0.8,
+    stars: [0.26, 0.74, 1.48], desc: 'Gegner starten langsam, werden flotter und jagen dich ab Sekunde 40.',
+    bdesc: 'Gegner starten langsam, werden flotter und jagen dich ab Sekunde 30.' },
+  schwer: { label: 'Schwer', bots: 4, s0: 0.75, s1: 0.95, ramp: 40, huntPlayer: true, huntDelay: 25, battleHunt: 20, smart: 0.9,
+    stars: [0.21, 0.53, 1.05], desc: '4 Gegner, schnell auf Tempo, jagen dich schon ab Sekunde 25.',
+    bdesc: '4 Gegner, schnell auf Tempo, jagen dich ab Sekunde 20.' },
 };
 const SKINS = [
   { id: 'minze', name: 'Minze', stars: 0, cols: ['#2fd3b9'] },
   { id: 'koralle', name: 'Koralle', stars: 1, cols: ['#ff5a4e'] },
-  { id: 'gold', name: 'Gold', stars: 2, cols: ['#ffd23f', '#ff9f1c'], spin: 0.6 },
-  { id: 'bonbon', name: 'Bonbon', stars: 3, cols: ['#ff7ac6', '#9b6bff'], spin: 0.8 },
-  { id: 'regenbogen', name: 'Regenbogen', stars: 5, rainbow: true, spin: 1 },
-  { id: 'lava', name: 'Lava', stars: 7, cols: ['#ff3d00', '#ffb300', '#ff3d00', '#ffe066'], spin: 1.6, pulse: true },
-  { id: 'galaxie', name: 'Galaxie', stars: 9, cols: ['#6a5cff', '#00e5ff', '#ff4fd8'], spin: 1.2, pulse: true },
+  { id: 'gold', name: 'Gold', stars: 3, cols: ['#ffd23f', '#ff9f1c'], spin: 0.6 },
+  { id: 'bonbon', name: 'Bonbon', stars: 5, cols: ['#ff7ac6', '#9b6bff'], spin: 0.8 },
+  { id: 'regenbogen', name: 'Regenbogen', stars: 8, rainbow: true, spin: 1 },
+  { id: 'lava', name: 'Lava', stars: 12, cols: ['#ff3d00', '#ffb300', '#ff3d00', '#ffe066'], spin: 1.6, pulse: true },
+  { id: 'galaxie', name: 'Galaxie', stars: 16, cols: ['#6a5cff', '#00e5ff', '#ff4fd8'], spin: 1.2, pulse: true },
 ];
 const BOTS = [['Mampf', '#ff8a3d'], ['Schlürf', '#ffd23f'], ['Krümel', '#9b6bff'], ['Happs', '#4f8bff']];
 const TIERS = [[0.6, 'Kanaldeckel'], [1.2, 'Gully'], [2.2, 'Krater'], [4.5, 'Schlund'], [8, 'Abgrund'], [11, 'Schwarzes Loch'], [999, '']];
 // Stufen: ab welchem Loch-Radius welche Objekte reinpassen (Radius = Schluckgröße / 0,95)
 const STAGES = [[0.6, 'Kleinkram & Menschen'], [0.7, 'Laternen & Bänke'], [0.95, 'Büsche'], [1.5, 'Autos'], [1.75, 'Bäume'],
   [2.35, 'Brunnen & Gartenhäuser'], [4.95, 'Häuser'], [8.5, 'Wohnblöcke'], [10.55, 'Endboss']];
-let GROWTH = 0.06;
-let GROWTH_EXP = 0.58;
+let GROWTH = 0.165;
+let GROWTH_EXP = 0.55;
 const radiusFor = m => R0 + GROWTH * Math.pow(m, GROWTH_EXP);
 const massFor = r => r <= R0 ? 0 : Math.pow((r - R0) / GROWTH, 1 / GROWTH_EXP);   // Umkehrung: welche Masse für Radius r
 let shownStage = -1;
@@ -154,11 +224,68 @@ const LS = {
   get: (k, d) => { try { const v = localStorage.getItem('lochfrass-' + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
   set: (k, v) => { try { localStorage.setItem('lochfrass-' + k, JSON.stringify(v)); } catch {} },
 };
-const starsFor = d => LS.get(`stars-${LEVEL}-${d}`, 0);
-const totalStars = () => Object.keys(DIFFS).reduce((s, d) => s + starsFor(d), 0);
-let diffKey = LS.get('diff', 'normal');
+// Sterne: Klassik und Battle je Schwierigkeit, Solo einmal → 21 Sterne pro Welt
+const starKey = (m, d) => m === 'solo' ? `stars-${LEVEL}-solo` : m === 'battle' ? `stars-${LEVEL}-battle-${d}` : `stars-${LEVEL}-${d}`;
+const starsOf = (m, d) => LS.get(starKey(m, d), 0);
+const modeMax = m => m === 'solo' ? 3 : Object.keys(DIFFS).length * 3;
+const modeStars = m => m === 'solo' ? starsOf('solo') : Object.keys(DIFFS).reduce((s, d) => s + starsOf(m, d), 0);
+const totalStars = () => Object.keys(MODES).reduce((s, m) => s + modeStars(m), 0);
+const MAX_STARS = Object.keys(MODES).reduce((s, m) => s + modeMax(m), 0);
+let modeKey = LS.get('mode', 'klassik'); if (!MODES[modeKey]) modeKey = 'klassik';
+let diffKey = LS.get('diff', 'normal'); if (!DIFFS[diffKey]) diffKey = 'normal';
 let skinId = LS.get('skin', 'minze');
 if (!SKINS.some(s => s.id === skinId && s.stars <= totalStars())) skinId = 'minze';
+
+// ================= Sound: wird im Browser erzeugt, keine Audio-Dateien =================
+const SND = (() => {
+  let ctx = null, out = null, noiseBuf = null, on = LS.get('sound', true), lastPlop = 0;
+  // iPad: Ton darf erst nach einer Berührung starten, deshalb init() bei jedem Antippen
+  function init() {
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      ctx = new AC(); out = ctx.createGain(); out.gain.value = on ? 0.55 : 0; out.connect(ctx.destination);
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ctx.state !== 'running') ctx.resume();
+  }
+  const ok = () => ctx && on && ctx.state === 'running';
+  function tone(type, f0, f1, dur, vol, delay = 0) {
+    if (!ok()) return;
+    const t = ctx.currentTime + delay, o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(out); o.start(t); o.stop(t + dur + 0.05);
+  }
+  function noise(dur, vol, freq, delay = 0) {
+    if (!ok()) return;
+    const t = ctx.currentTime + delay, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noiseBuf; s.loop = true; f.type = 'lowpass'; f.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(out); s.start(t); s.stop(t + dur + 0.05);
+  }
+  return {
+    init,
+    get on() { return on; },
+    toggle() { on = !on; LS.set('sound', on); if (out) out.gain.value = on ? 0.55 : 0; },
+    plop(v) {   // kleine Dinge klingen hell, größere tiefer
+      const now = performance.now(); if (now - lastPlop < 55) return; lastPlop = now;
+      const f = 700 / Math.sqrt(v) * (0.9 + Math.random() * 0.2); tone('sine', f * 1.8, f * 0.7, 0.13, 0.22);
+    },
+    thud(k) { tone('sine', 150, 38, 0.5, 0.4 + k * 0.3); noise(0.4 + k * 0.4, 0.16 + k * 0.2, 380); },
+    levelUp() { [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f * 1.01, 0.2, 0.2, i * 0.085)); },
+    combo(m) { const f = 520 * Math.pow(1.19, m); tone('square', f, f * 1.5, 0.12, 0.06); tone('triangle', f * 1.5, f * 2, 0.15, 0.1, 0.06); },
+    gulp() { tone('sine', 420, 70, 0.45, 0.4); tone('triangle', 260, 50, 0.5, 0.2, 0.05); },
+    lose() { [392, 330, 262].forEach((f, i) => tone('triangle', f, f * 0.97, 0.26, 0.2, i * 0.2)); },
+    rumble() { noise(3.6, 0.45, 160); tone('sine', 70, 28, 3.6, 0.45); },
+    tick(hi) { tone('square', hi ? 1320 : 880, hi ? 1320 : 880, 0.08, 0.08); },
+    jingle(stars) {
+      const seq = stars >= 2 ? [523, 659, 784, 1047, 1319] : stars === 1 ? [523, 659, 784] : [392, 330];
+      seq.forEach((f, i) => tone('triangle', f, f, 0.24, 0.2, i * 0.11));
+    },
+  };
+})();
+for (const ev of ['pointerdown', 'touchend', 'click', 'keydown']) addEventListener(ev, () => SND.init(), { passive: true });
 
 // ================= Zufall (fester Startwert = immer gleiche Karte) =================
 let seed = 7;
@@ -319,19 +446,19 @@ function tree(x, z) {
   const s = R(1, 1.5), g = pick(C.leaf), g2 = shade(g, 0.85);
   const m = build([P(GE.cyl, '#9a6236', 0, 0.8, 0, 0.18, 1.6, 0.18), P(GE.sph, g, 0, 1.6 + s, 0, s),
     P(GE.sph, g2, s * 0.6, 1.3 + s * 0.8, s * 0.2, s * 0.68), P(GE.sph, g2, -s * 0.55, 1.35 + s * 0.75, -s * 0.25, s * 0.62)]);
-  m.rotation.y = R(0, 6.28); return add(m, x, z, s * 1.05, 6, 1.6 + 2 * s);
+  m.rotation.y = R(0, 6.28); return add(m, x, z, s * 1.05, 9, 1.6 + 2 * s);
 }
 function pine(x, z) {
   const s = R(0.9, 1.3), g = '#2f9e5b';
   const m = build([P(GE.cyl, '#9a6236', 0, 0.5, 0, 0.16, 1, 0.16), P(GE.cone, g, 0, 1.6 * s, 0, 1.3 * s, 1.6 * s),
     P(GE.cone, shade(g, 1.1), 0, 2.5 * s, 0, 1.0 * s, 1.4 * s), P(GE.cone, shade(g, 1.2), 0, 3.3 * s, 0, 0.7 * s, 1.2 * s)]);
-  return add(m, x, z, 1.2 * s, 6, 4 * s);
+  return add(m, x, z, 1.2 * s, 9, 4 * s);
 }
 function bush(x, z) {
   const s = R(0.5, 0.8), g = pick(C.leaf);
   const parts = [P(GE.sph, g, 0, s * 0.7, 0, s, s * 0.85, s), P(GE.sph, shade(g, 0.88), s * 0.7, s * 0.5, 0.1, s * 0.7, s * 0.6, s * 0.7)];
   if (rnd() < 0.4) for (let i = 0; i < 3; i++) parts.push(P(GE.sph, pick(['#ff7ac6', '#fff', '#ffd23f']), R(-s, s) * 0.7, s * 1.35, R(-s, s) * 0.6, 0.12));
-  const m = build(parts); m.rotation.y = R(0, 6.28); return add(m, x, z, s * 1.1, 2, s * 1.5);
+  const m = build(parts); m.rotation.y = R(0, 6.28); return add(m, x, z, s * 1.1, 3, s * 1.5);
 }
 function car(x, z, rot, drive) {
   const c = pick(C.car);
@@ -342,12 +469,12 @@ function car(x, z, rot, drive) {
     parts.push(P(GE.cyl, '#2a2d36', wx, 0.4, wz, 0.4, 0.3, 0.4, Math.PI / 2)); parts.push(P(GE.cyl, '#d9dde5', wx, 0.4, wz * 1.07, 0.18, 0.3, 0.18, Math.PI / 2));
   }
   const m = build(parts); m.rotation.y = rot;
-  return add(m, x, z, 1.75, 10, 1.75, { L: 1.75, W: 0.88, s: 1.4, ...(drive ? { drive } : {}) });
+  return add(m, x, z, 1.75, 14, 1.75, { L: 1.75, W: 0.88, s: 1.4, ...(drive ? { drive } : {}) });
 }
 function fountain(x, z) {
   return add(build([P(GE.cyl, '#cfd6e0', 0, 0.3, 0, 2.1, 0.6, 2.1), P(GE.cyl, '#5cc8f5', 0, 0.58, 0, 1.85, 0.08, 1.85),
     P(GE.cyl, '#cfd6e0', 0, 1.2, 0, 0.3, 1.6, 0.3), P(GE.cyl, '#cfd6e0', 0, 1.95, 0, 0.9, 0.2, 0.9),
-    P(GE.sph, '#5cc8f5', 0, 2.35, 0, 0.4), P(GE.sph, '#5cc8f5', 0, 2.9, 0, 0.22)]), x, z, 2.2, 18, 3);
+    P(GE.sph, '#5cc8f5', 0, 2.35, 0, 0.4), P(GE.sph, '#5cc8f5', 0, 2.9, 0, 0.22)]), x, z, 2.2, 22, 3);
 }
 
 // Häuser: Wände mit Fenster-Textur + verschmolzene Extras (Dach, Tür, Kamin …)
@@ -390,7 +517,7 @@ function house(x, z, w, d, h, opts = {}) {
   const extraMat = vcMat.clone();
   const g = new THREE.Group(); g.add(walls, build(parts, extraMat));
   houseRects.push([x - w / 2 - 0.6, x + w / 2 + 0.6, z - d / 2 - 0.6, z + d / 2 + 1.2]);
-  return add(g, x, z, Math.hypot(w, d) / 2 * 0.85, Math.round(w * d * top / 10), top,
+  return add(g, x, z, Math.hypot(w, d) / 2 * 0.85, Math.max(12, Math.round(w * d * top / 10)), top,
     { mats: [wallMat, extraMat], fade: 1, L: Math.max(w, d) / 2 + 0.3, W: Math.min(w, d) / 2 + 0.3, longZ: d > w });
 }
 
@@ -464,7 +591,7 @@ for (const rc of ROADS) { flat(W, 7, 0, rc, 0.02, TEX.asphalt, 8); flat(7, W, rc
 const onRoad = (x, z, pad = 5.2) => ROADS.some(r => Math.abs(x - r) < pad || Math.abs(z - r) < pad);
 const inHouse = (x, z) => houseRects.some(([a, b, c, d]) => x > a && x < b && z > c && z < d);
 const freeSpot = (bx, bz, spread = 9.5) => { for (let i = 0; i < 12; i++) { const x = bx + R(-spread, spread), z = bz + R(-spread, spread); if (!inHouse(x, z)) return [x, z]; } return null; };
-const PLAZAS = ['15,-15', '-45,45', '75,-45', '-75,-75', '105,75', '-105,15'];
+const PLAZAS = ['15,-15', '-45,45', '75,-45', '-75,-75', '45,75'];
 for (const bx of BLOCKS) for (const bz of BLOCKS) {
   const cd = Math.max(Math.abs(bx), Math.abs(bz));
   const r0 = rnd();
@@ -522,17 +649,21 @@ for (const rc of ROADS) {   // Gehweg-Ausstattung + parkende Autos
     if (rnd() < 0.45) car(rc + pick([-1, 1]) * 2.4, t, Math.PI / 2);
   }
 }
-for (let i = 0; i < 22; i++) {   // fahrende Autos
-  const rc = pick(ROADS), dir = pick([-1, 1]), t = R(-MAP, MAP), lane = rc + dir * 0.9;
-  if (rnd() < 0.5) car(t, lane, dir > 0 ? 0 : Math.PI, { ax: 'x', v: dir * R(4, 6) });
-  else car(lane, t, dir > 0 ? -Math.PI / 2 : Math.PI / 2, { ax: 'z', v: dir * R(4, 6) });
+// Fahrende Autos: Rechtsverkehr, biegen an Kreuzungen ab und wenden am Kartenrand
+const LANE = 0.9, TURN_R = 2.6;
+const laneOf = (ax, rc, dir) => ax === 'x' ? rc + dir * LANE : rc - dir * LANE;
+for (let i = 0; i < 30; i++) {
+  const ax = rnd() < 0.5 ? 'x' : 'z', rc = pick(ROADS), dir = pick([-1, 1]), t = R(-MAP + 8, MAP - 8);
+  const drive = { ax, rc, dir, sp: R(3.5, 5.5), curve: null, pending: null, decided: null };
+  if (ax === 'x') car(t, laneOf('x', rc, dir), dir > 0 ? 0 : Math.PI, drive);
+  else car(laneOf('z', rc, dir), t, dir > 0 ? -Math.PI / 2 : Math.PI / 2, drive);
 }
-for (let n = 0; n < 480;) {   // Menschen
+for (let n = 0; n < 300;) {   // Menschen
   const x = R(-MAP + 2, MAP - 2), z = R(-MAP + 2, MAP - 2);
   if (onRoad(x, z, 3.6) || inHouse(x, z)) continue;
   person(x, z); n++;
 }
-for (let n = 0; n < 260;) {   // Kleinkram verstreut
+for (let n = 0; n < 160;) {   // Kleinkram verstreut
   const x = R(-MAP + 2, MAP - 2), z = R(-MAP + 2, MAP - 2);
   if (onRoad(x, z, 3.6) || inHouse(x, z)) continue;
   small(x, z); n++;
@@ -594,7 +725,8 @@ function makeHole(name, skin, isPlayer) {
   const glowMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, toneMapped: false }); glowMat.userData = NO_OUTLINE;
   const glow = new THREE.Mesh(GLOW, glowMat); glow.rotation.x = -Math.PI / 2; glow.position.y = 0.06;
   grp.add(mask, well, bottom, rim, glow); scene.add(grp);
-  const h = { name, skin, isPlayer, grp, rim, glow, x: 0, z: 0, mass: 0, score: 0, r: R0, rShow: R0, px: 0, pz: 0, speed: 0, alive: true, dead: 0, grace: 2, think: 0, tx: 0, tz: 0 };
+  const h = { name, skin, isPlayer, grp, rim, glow, x: 0, z: 0, mass: 0, score: 0, r: R0, rShow: R0, px: 0, pz: 0, speed: 0, alive: true, dead: 0, grace: 2, think: 0, tx: 0, tz: 0,
+    kills: 0, lastKill: -99, pulse: 0, cn: 0, ct: 0, cm: 1, out: false, place: 0, by: null, rel: '' };   // cn/ct/cm = Combo-Zähler, -Zeit, -Faktor
   paintRim(h);
   if (!isPlayer) { h.tag = document.createElement('div'); h.tag.className = 'tag'; h.tag.textContent = name; document.body.appendChild(h.tag); }
   holes.push(h); return h;
@@ -604,11 +736,45 @@ function spawn(h) {
     h.x = rand(-MAP + 15, MAP - 15); h.z = rand(-MAP + 15, MAP - 15);
     if (holes.every(o => o === h || Math.hypot(o.x - h.x, o.z - h.z) > 35)) break;
   }
-  h.mass = 0; h.r = h.rShow = R0; h.alive = true; h.grace = 2.5; h.grp.visible = true;
+  h.mass = 0; h.r = h.rShow = R0; h.alive = true; h.grace = 2.5; h.grp.visible = true; h.px = h.x; h.pz = h.z;
 }
 const player = makeHole('Du', SKINS.find(s => s.id === skinId), true);
 player.x = 0; player.z = 4;
 let bots = [];
+
+// ================= Effekte: Staubwolken + Welle beim Stufenaufstieg =================
+const PUFFS = [], puffMat = toon({ color: 0xf6f1e7 }), puffGeo = new THREE.SphereGeometry(1, 12, 9);
+for (let i = 0; i < 60; i++) { const m = new THREE.Mesh(puffGeo, puffMat); m.visible = false; scene.add(m); PUFFS.push({ m, t: 0, life: 1, s: 1, vx: 0, vy: 0, vz: 0 }); }
+let puffI = 0;
+function puff(x, z, n, size, spread = 0, ang = null) {
+  for (let i = 0; i < n; i++) {
+    const p = PUFFS[puffI = (puffI + 1) % PUFFS.length];
+    const a = ang === null ? Math.random() * 6.283 : ang, r = Math.random() * spread, sp = size * rand(1.2, 2.2);
+    p.m.position.set(x + Math.cos(a) * r, size * 0.4, z + Math.sin(a) * r);
+    p.vx = Math.cos(a) * sp; p.vz = Math.sin(a) * sp; p.vy = size * rand(1.2, 2.4);
+    p.life = p.t = rand(0.55, 0.85); p.s = size * rand(0.55, 0.9); p.m.scale.setScalar(0.01); p.m.visible = true;
+  }
+}
+function puffRing(h, n) {   // Wolkenkranz rund um ein Loch
+  const size = Math.min(2.4, 0.35 + h.rShow * 0.18);
+  for (let i = 0; i < n; i++) { const a = i / n * 6.283; puff(h.x + Math.cos(a) * h.rShow * 1.1, h.z + Math.sin(a) * h.rShow * 1.1, 1, size, 0, a); }
+}
+function updatePuffs(dt) {
+  const damp = Math.pow(0.04, dt);
+  for (const p of PUFFS) {
+    if (p.t <= 0) continue;
+    p.t -= dt; if (p.t <= 0) { p.m.visible = false; continue; }
+    const k = 1 - p.t / p.life, m = p.m;
+    m.position.x += p.vx * dt; m.position.y += p.vy * dt; m.position.z += p.vz * dt;
+    p.vx *= damp; p.vy *= damp; p.vz *= damp;
+    m.scale.setScalar(Math.max(0.01, p.s * Math.sin(Math.PI * Math.pow(k, 0.6))));   // schnell aufblähen, langsam verpuffen
+  }
+}
+const waveMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, toneMapped: false });
+waveMat.userData = NO_OUTLINE;
+const wave = new THREE.Mesh(new THREE.RingGeometry(1, 1.14, 72), waveMat);
+wave.rotation.x = -Math.PI / 2; wave.visible = false; scene.add(wave);
+let waveT = 0;
 
 // ================= Steuerung =================
 const keys = {};
@@ -632,7 +798,7 @@ addEventListener('pointerup', endDrag); addEventListener('pointercancel', endDra
 
 function moveHole(h, ix, iz, dt, f = 1) {
   const l = Math.hypot(ix, iz); if (l > 1) { ix /= l; iz /= l; }
-  const sp = (7.5 + h.rShow * 1.3) * f;
+  const sp = (5 + h.rShow * 0.75) * f;   // klein ≈ 5,5, groß ≈ 11 Einheiten pro Sekunde
   h.x = clamp(h.x + ix * sp * dt, -MAP + h.rShow, MAP - h.rShow);
   h.z = clamp(h.z + iz * sp * dt, -MAP + h.rShow, MAP - h.rShow);
 }
@@ -651,12 +817,12 @@ function think(b, smart, mayHuntPlayer) {
   for (const o of holes) {   // Kleinere jagen
     if (o === b || !o.alive || o.grace > 0 || o.r * 1.3 > b.r) continue;
     if (o.isPlayer && !mayHuntPlayer) continue;
-    if (Math.hypot(o.x - b.x, o.z - b.z) < 16) { b.tx = o.x; b.tz = o.z; return; }
+    if (Math.hypot(o.x - b.x, o.z - b.z) < (modeKey === 'battle' ? 24 : 16)) { b.tx = o.x; b.tz = o.z; return; }
   }
   if (Math.random() > smart) { b.tx = clamp(b.x + rand(-20, 20), -MAP, MAP); b.tz = clamp(b.z + rand(-20, 20), -MAP, MAP); return; }
   let best = null, bestVal = 0;
   for (const o of objects) {   // sonst: lohnendstes Objekt in der Nähe
-    if (o.falling || o.state || o.boss || o.s > b.r * 0.9 || o.L > b.r * 1.02) continue;
+    if (o.falling || o.state || o.boss || o.s > b.rShow * 0.9 || o.L > b.rShow * 0.97) continue;   // nur was sicher reinpasst
     const d = Math.hypot(o.g.position.x - b.x, o.g.position.z - b.z);
     const val = o.v / (d + 4);
     if (val > bestVal) { bestVal = val; best = o; }
@@ -668,25 +834,60 @@ function think(b, smart, mayHuntPlayer) {
 // ================= HUD =================
 const $ = id => document.getElementById(id);
 const card = $('card'), board = $('board');
+const CROWN = '<svg viewBox="0 0 44 34"><path d="M5 30 L3 9 L14 17 L22 4 L30 17 L41 9 L39 30 Z" fill="#ffd23f" stroke="#1d2433" stroke-width="3.5" stroke-linejoin="round"/>' +
+  '<path d="M6 25 H38" stroke="#1d2433" stroke-width="3"/><circle cx="22" cy="19" r="3.2" fill="#ff5a4e" stroke="#1d2433" stroke-width="2"/></svg>';
+$('crown').innerHTML = CROWN;
+let pops = 0;
 function popup(text, h, color = '#fff') {
+  if (pops > 7) return;   // nicht zu viele Zahlen gleichzeitig
   const p = new THREE.Vector3(h.x, 1, h.z).project(camera);
   const el = document.createElement('div'); el.className = 'pop'; el.textContent = text; el.style.color = color;
   el.style.left = (p.x + 1) / 2 * innerWidth + 'px'; el.style.top = (1 - p.y) / 2 * innerHeight + 'px';
-  document.body.appendChild(el); setTimeout(() => el.remove(), 800);
+  document.body.appendChild(el); pops++; setTimeout(() => { el.remove(); pops--; }, 800);
 }
-function flash(text) { const m = $('msg'); m.textContent = text; m.style.opacity = 1; clearTimeout(flash.t); flash.t = setTimeout(() => m.style.opacity = 0, 1500); }
+function flash(text) {
+  const m = $('msg'); m.textContent = text; m.style.opacity = 1; m.classList.remove('pop2'); void m.offsetWidth; m.classList.add('pop2');
+  clearTimeout(flash.t); flash.t = setTimeout(() => m.style.opacity = 0, 1500);
+}
+const dot = h => `<span class="dot" style="background:${skinCss(h.skin)}"></span>`;
+function feed(a, b, dbl) {   // Kill-Meldung oben in der Mitte, höchstens 3 gleichzeitig
+  const txt = a.isPlayer ? `${dot(a)}Du hast ${dot(b)}${b.name} geschluckt` : b.isPlayer ? `${dot(a)}${a.name} hat ${dot(b)}dich geschluckt`
+    : `${dot(a)}${a.name} hat ${dot(b)}${b.name} geschluckt`;
+  const el = document.createElement('div'); el.className = 'kf' + (a.isPlayer ? ' me' : b.isPlayer ? ' bad' : '');
+  el.innerHTML = txt + (dbl ? ' · <b>Doppel-Kill!</b>' : '');
+  const f = $('feed'); f.prepend(el); while (f.children.length > 3) f.lastChild.remove();
+  setTimeout(() => el.classList.add('out'), 2800); setTimeout(() => el.remove(), 3300);
+}
+function showCombo(m) { const c = $('combo'); c.textContent = 'COMBO x' + m; c.classList.add('on'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
+const hideCombo = () => $('combo').classList.remove('on');
+const sndBtn = $('snd'), paintSnd = () => sndBtn.classList.toggle('off', !SND.on);
+sndBtn.onclick = () => { SND.init(); SND.toggle(); paintSnd(); };
+paintSnd();
 const starStr = n => '★'.repeat(n) + '<span style="color:#e3e6ee">★</span>'.repeat(3 - n);
 const starScores = () => D.stars.map(f => Math.round(TOTAL_VALUE * f / 50) * 50);
+function findLeader() {   // wer die Krone trägt: meiste Punkte (im Solo niemand)
+  if (modeKey === 'solo') return null;
+  let best = null;
+  for (const h of holes) if (!h.out && h.score > 0 && (!best || h.score > best.score)) best = h;
+  return best;
+}
+function levelUp(st) {
+  flash(`Stufe ${st + 1}: ${STAGES[st][1]}!`);
+  const sb = $('sizeBox'); sb.classList.remove('up'); void sb.offsetWidth; sb.classList.add('up');
+  SND.levelUp(); waveT = 0.7; waveMat.color.copy(skinColor(player.skin, 0)); puffRing(player, 12);
+}
 function updateHud() {
   const s = Math.max(0, Math.ceil(timeLeft));
   $('time').textContent = Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-  $('time').classList.toggle('warn', running && s <= 15);
+  $('time').classList.toggle('warn', running && s <= 10);
   $('score').textContent = player.score;
+  $('pct').textContent = Math.floor(eatenValue / TOTAL_VALUE * 100) + '%';
+  $('alive').textContent = holes.filter(h => !h.out).length + ' übrig';
   let i = 0; while (player.rShow >= TIERS[i + 1][0]) i++;
   $('holeName').textContent = TIERS[i][1];
   // XP = gefressene Masse; jede Stufe braucht die Masse, bei der das Loch groß genug für die nächste Objekt-Gruppe ist
   let st = 0; while (st + 1 < STAGES.length && player.mass >= massFor(STAGES[st + 1][0])) st++;
-  if (st > shownStage) { if (running && shownStage >= 0) { flash(`Stufe ${st + 1}: ${STAGES[st][1]}!`); $('sizeBox').classList.remove('up'); void $('sizeBox').offsetWidth; $('sizeBox').classList.add('up'); } }
+  if (st > shownStage && running && shownStage >= 0) levelUp(st);
   shownStage = st;
   $('stage').textContent = 'Stufe ' + (st + 1);
   if (st + 1 < STAGES.length) {
@@ -701,51 +902,85 @@ function updateHud() {
   $('bossBox').classList.toggle('ready', ready);
   $('bossTxt').textContent = bossEaten ? 'Endboss geschluckt!' : ready ? 'Endboss: jetzt schlucken!' : 'Endboss: Riesenturm';
   $('bossBar').style.width = (bossEaten ? 100 : clamp(player.rShow / need, 0, 1) * 100) + '%';
-  board.innerHTML = [...holes].sort((a, b) => b.score - a.score).map(h =>
-    `<div class="${h.isPlayer ? 'me' : ''}"><span><span class="dot" style="background:${skinCss(h.skin)}"></span>${h.name}</span><span>${h.score}</span></div>`).join('');
+  leader = findLeader();
+  const list = modeKey === 'battle' ? [...holes].sort((a, b) => (a.out - b.out) || (a.out ? a.place - b.place : b.score - a.score))
+    : [...holes].sort((a, b) => b.score - a.score);
+  board.innerHTML = list.map(h => `<div class="${h.isPlayer ? 'me' : ''}${h.out ? ' out' : ''}"><span>${h === leader ? `<span class="crown">${CROWN}</span>` : dot(h)}${h.name}</span><span>${h.score}</span></div>`).join('');
 }
 function renderStart() {
-  const ts = totalStars(), max = Object.keys(DIFFS).length * 3;
+  const ts = totalStars(), solo = modeKey === 'solo';
+  document.body.dataset.mode = modeKey;
   card.innerHTML = `
     <h1>Lochfrass!</h1>
     <p class="lvl">Level 1 · Vorstadt</p>
-    <div class="sec">Schwierigkeit</div>
+    <div class="sec">Modus</div>
+    <div class="seg">${Object.entries(MODES).map(([k, m]) =>
+      `<button class="segb ${k === modeKey ? 'on' : ''}" data-mode="${k}">${m.label}<small>★ ${modeStars(k)}/${modeMax(k)}</small></button>`).join('')}</div>
+    <p class="small">${MODES[modeKey].desc}</p>
+    ${solo ? '' : `<div class="sec">Schwierigkeit</div>
     <div class="seg">${Object.entries(DIFFS).map(([k, d]) =>
-      `<button class="segb ${k === diffKey ? 'on' : ''}" data-diff="${k}">${d.label}<small>${starStr(starsFor(k))}</small></button>`).join('')}</div>
-    <p class="small">${DIFFS[diffKey].desc}</p>
-    <div class="sec"><span>Loch-Skin</span><span class="tot">★ ${ts} / ${max}</span></div>
+      `<button class="segb ${k === diffKey ? 'on' : ''}" data-diff="${k}">${d.label}<small>${starStr(starsOf(modeKey, k))}</small></button>`).join('')}</div>
+    <p class="small">${modeKey === 'battle' ? DIFFS[diffKey].bdesc : DIFFS[diffKey].desc}</p>`}
+    <div class="sec"><span>Loch-Skin</span><span class="tot">★ ${ts} / ${MAX_STARS}</span></div>
     <div class="skins">${SKINS.map(s => { const ok = ts >= s.stars;
       return `<button class="sk ${s.id === skinId ? 'on' : ''} ${ok ? '' : 'lock'}" data-skin="${s.id}" ${ok ? '' : 'disabled'}><i style="background:${skinCss(s)}"></i><small>${ok ? s.name : 'ab ' + s.stars + '★'}</small></button>`; }).join('')}</div>
     <button class="go" id="start">Los geht's</button>
-    <p class="small">Finger auflegen und ziehen · am Mac: Maus ziehen oder WASD</p>`;
+    <p class="small">Finger auflegen und ziehen · am Mac: Maus ziehen oder WASD${solo ? '' : '<br>Grüner Name = kannst du schlucken · Roter Name = Vorsicht!'}</p>`;
+  card.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { modeKey = b.dataset.mode; LS.set('mode', modeKey); renderStart(); });
   card.querySelectorAll('[data-diff]').forEach(b => b.onclick = () => { diffKey = b.dataset.diff; D = DIFFS[diffKey]; LS.set('diff', diffKey); renderStart(); });
   card.querySelectorAll('[data-skin]').forEach(b => b.onclick = () => { skinId = b.dataset.skin; LS.set('skin', skinId); player.skin = SKINS.find(s => s.id === skinId); paintRim(player); renderStart(); });
   $('start').onclick = startGame;
 }
 
 // ================= Spielablauf =================
-let running = false, timeLeft = ROUND_TIME, eaten = 0, hudT = 0, autopilot = false;
-let shakeT = 0, bossEaten = false, bossReadyShown = false;
+let running = false, timeLeft = ROUND_TIME, eaten = 0, eatenValue = 0, hudT = 0, autopilot = false, lastSec = 99;
+const AP = { speed: 1, smart: 1 };   // Autopilot zum Testen; mit weniger Tempo/Klugheit spielt er wie ein Mensch
+let shakeT = 0, shakeA = 0, bossEaten = false, bossReadyShown = false, endT = 0, leader = null;
 const camLook = new THREE.Vector3(player.x, 0, player.z);
 camera.position.set(player.x, 14, player.z + 8);
 
 function startGame() {
   D = DIFFS[diffKey];
-  bots = BOTS.slice(0, D.bots).map(([n, c]) => { const b = makeHole(n, { cols: [c] }, false); spawn(b); return b; });
+  const n = modeKey === 'solo' ? 0 : D.bots;
+  bots = BOTS.slice(0, n).map(([name, c]) => { const b = makeHole(name, { cols: [c] }, false); spawn(b); return b; });
+  document.body.dataset.mode = modeKey;
   $('overlay').style.display = 'none'; running = true; elapsed = 0;
 }
+const shake = (t, a) => { shakeT = Math.max(shakeT, t); shakeA = Math.max(shakeA, a); };
+// Combo: schnell hintereinander fressen gibt mehr Punkte (die XP bleiben gleich, damit das Wachstum fair bleibt)
+const COMBO_TIME = 1.4, comboMult = n => n >= 30 ? 5 : n >= 20 ? 4 : n >= 12 ? 3 : n >= 5 ? 2 : 1;
 function eat(h, o) {
-  h.mass += o.v; h.score += o.v;
-  if (h.isPlayer) { eaten++; popup('+' + o.v, h, o.boss ? '#ffd23f' : '#fff'); }
+  h.mass += o.v;
+  h.cn++; h.ct = COMBO_TIME;
+  const m = comboMult(h.cn), pts = o.v * m;
+  h.score += pts; h.pulse = Math.min(1, h.pulse + (o.v >= 10 ? 0.7 : 0.3));
+  if (!h.isPlayer) { h.cm = m; return; }
+  eaten++; eatenValue += o.v;
+  if (m > h.cm) { showCombo(m); SND.combo(m); }
+  h.cm = m;
+  popup('+' + pts, h, o.boss || m > 1 ? '#ffd23f' : '#fff');
+  if (o.v < 25) SND.plop(o.v);
+}
+function swallowHole(a, b) {   // großes Loch schluckt kleines Loch
+  const dbl = elapsed - a.lastKill < 4, pts = 20 + Math.round(b.mass * 0.5) + (dbl ? 50 : 0);
+  a.mass += b.mass * 0.5 + 20; a.score += pts; a.kills++; a.lastKill = elapsed; a.pulse = 1;
+  b.alive = false; b.grp.visible = false; b.by = a; b.cn = 0; b.cm = 1; b.ct = 0;
+  if (modeKey === 'battle') { b.out = true; b.place = holes.filter(h => !h.out).length + 1; } else b.dead = 3;
+  feed(a, b, dbl);
+  if (a.isPlayer) { popup('+' + pts, a, '#ffd23f'); flash(dbl ? 'DOPPEL-KILL!' : b.name + ' geschluckt!'); SND.gulp(); shake(0.45, 0.18); }
+  if (b.isPlayer) { flash(a.name + ' hat dich geschluckt!'); SND.lose(); hideCombo(); if (modeKey === 'battle') endT = 1.8; }
+  else if (modeKey === 'battle' && holes.every(h => h === player || h.out)) endT = 1.2;   // nur noch du übrig: gewonnen
 }
 
 function update(dt) {
   timeLeft -= dt; elapsed += dt;
-  if (timeLeft <= 0) return endRound();
+  if (timeLeft <= 0 || (endT > 0 && (endT -= dt) <= 0)) return endRound();
+  const sec = Math.ceil(timeLeft);
+  if (sec !== lastSec) { lastSec = sec; if (sec <= 10) SND.tick(sec <= 3); }   // Countdown in den letzten 10 Sekunden
   if (player.alive) {
     if (autopilot) {
-      player.think -= dt; if (player.think <= 0) { think(player, 1, false); player.think = 0.4; }
-      const dx = player.tx - player.x, dz = player.tz - player.z, l = Math.hypot(dx, dz); if (l > 0.5) moveHole(player, dx / l, dz / l, dt);
+      player.think -= dt; if (player.think <= 0) { think(player, AP.smart, false); player.think = 0.4; }
+      const dx = player.tx - player.x, dz = player.tz - player.z, l = Math.hypot(dx, dz); if (l > 0.5) moveHole(player, dx / l, dz / l, dt, AP.speed);
     } else {
       let ix = (keys.d || keys.arrowright ? 1 : 0) - (keys.a || keys.arrowleft ? 1 : 0);
       let iz = (keys.s || keys.arrowdown ? 1 : 0) - (keys.w || keys.arrowup ? 1 : 0);
@@ -754,28 +989,24 @@ function update(dt) {
       moveHole(player, ix, iz, dt);
     }
   }
-  const k = ramp(), botSpeed = D.s0 + (D.s1 - D.s0) * k, smart = D.smart * (0.35 + 0.65 * k);
+  const k = ramp(), botSpeed = D.s0 + (D.s1 - D.s0) * k, smart = D.smart * (0.6 + 0.4 * k);
+  const hunt = modeKey === 'battle' ? elapsed > D.battleHunt : D.huntPlayer && elapsed > D.huntDelay;
   for (const b of bots) {
     if (!b.alive) continue;
-    b.think -= dt; if (b.think <= 0) { think(b, smart, D.huntPlayer && elapsed > D.huntDelay); b.think = rand(0.4, 0.7); }
+    b.think -= dt; if (b.think <= 0) { think(b, smart, hunt); b.think = rand(0.4, 0.7); }
     const dx = b.tx - b.x, dz = b.tz - b.z, l = Math.hypot(dx, dz);
     if (l > 0.5) moveHole(b, dx / l, dz / l, dt, botSpeed);
   }
   for (const h of holes) {
-    if (!h.alive) { h.dead -= dt; if (h.dead <= 0) { spawn(h); if (h.isPlayer) flash('Weiter geht\'s!'); } continue; }
+    if (!h.alive) { if (!h.out && (h.dead -= dt) <= 0) { spawn(h); if (h.isPlayer) flash('Weiter geht\'s!'); } continue; }
     h.speed = dt > 0 ? Math.min(30, Math.hypot(h.x - h.px, h.z - h.pz) / dt) : 0; h.px = h.x; h.pz = h.z;
     h.grace -= dt; h.r = radiusFor(h.mass);
     h.rShow += (h.r - h.rShow) * Math.min(1, dt * 4);
+    if (h.ct > 0 && (h.ct -= dt) <= 0) { h.cn = 0; h.cm = 1; if (h.isPlayer) hideCombo(); }   // Combo abgerissen
   }
   for (const a of holes) for (const b of holes) {   // großes Loch frisst kleines Loch
     if (a === b || !a.alive || !b.alive || b.grace > 0 || a.rShow < b.rShow * 1.25) continue;
-    if (Math.hypot(a.x - b.x, a.z - b.z) < a.rShow - b.rShow * 0.3) {
-      const bonus = 20 + Math.round(b.mass * 0.5);
-      a.mass += b.mass * 0.5 + 20; a.score += bonus;
-      b.alive = false; b.dead = 3; b.grp.visible = false;
-      if (a.isPlayer) { popup('+' + bonus, a, '#ffd23f'); flash(b.name + ' geschluckt!'); }
-      if (b.isPlayer) flash(a.name + ' hat dich geschluckt!');
-    }
+    if (Math.hypot(a.x - b.x, a.z - b.z) < a.rShow - b.rShow * 0.3) swallowHole(a, b);
   }
   for (let i = objects.length - 1; i >= 0; i--) {
     const o = objects[i], p = o.g.position;
@@ -795,12 +1026,9 @@ function update(dt) {
         if (Math.abs(p.x) > MAP - 2) w.dx = -Math.sign(p.x); if (Math.abs(p.z) > MAP - 2) w.dz = -Math.sign(p.z);
       }
       p.x += w.dx * w.sp * dt; p.z += w.dz * w.sp * dt; p.y = Math.abs(Math.sin(w.ph)) * 0.08;
-      o.g.rotation.y = Math.atan2(w.dx, w.dz);
+      o.g.rotation.set(0, Math.atan2(w.dx, w.dz), 0);   // set statt nur .y: nach dem Kippen bleibt sonst eine Restdrehung
     }
-    if (o.drive) {
-      if (o.drive.ax === 'x') { p.x += o.drive.v * dt; if (Math.abs(p.x) > MAP + 2) p.x = -Math.sign(p.x) * MAP; }
-      else { p.z += o.drive.v * dt; if (Math.abs(p.z) > MAP + 2) p.z = -Math.sign(p.z) * MAP; }
-    }
+    if (o.drive) driveCar(o, p, dt);
     for (const h of holes) {
       if (!h.alive || (o.boss && !h.isPlayer)) continue;
       const R = h.rShow, dx = p.x - h.x, dz = p.z - h.z, d = Math.hypot(dx, dz);
@@ -813,6 +1041,48 @@ function update(dt) {
   }
 }
 
+// ---------- Autos: Spur halten, an Kreuzungen abbiegen, am Kartenrand wenden ----------
+const bez = (t, a, b, c, d) => { const u = 1 - t; return u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c + t * t * t * d; };
+const bezD = (t, a, b, c, d) => { const u = 1 - t; return 3 * u * u * (b - a) + 6 * u * t * (c - b) + 3 * t * t * (d - c); };
+function curve(sx, sz, dx, dz, ex, ez, nx, nz, k, end) {   // Kurve von S (Fahrtrichtung d) nach E (Fahrtrichtung n)
+  const c = { x: [sx, sx + dx * k, ex - nx * k, ex], z: [sz, sz + dz * k, ez - nz * k, ez], t: 0, end };
+  c.len = (Math.hypot(c.x[1] - c.x[0], c.z[1] - c.z[0]) + Math.hypot(c.x[2] - c.x[1], c.z[2] - c.z[1])
+    + Math.hypot(c.x[3] - c.x[2], c.z[3] - c.z[2]) + Math.hypot(ex - sx, ez - sz)) / 2;
+  return c;
+}
+function driveCar(o, p, dt) {
+  const c = o.drive;
+  if (c.curve) {   // gerade in einer Kurve oder beim Wenden
+    const cv = c.curve, k = Math.min(1, dt * 10); cv.t = Math.min(1, cv.t + c.sp * dt / cv.len);
+    p.x += (bez(cv.t, ...cv.x) - p.x) * k; p.z += (bez(cv.t, ...cv.z) - p.z) * k;
+    o.g.rotation.set(0, Math.atan2(-bezD(cv.t, ...cv.z), bezD(cv.t, ...cv.x)), 0);
+    if (cv.t >= 1) { Object.assign(c, cv.end); c.curve = null; c.decided = null; }
+    return;
+  }
+  const X = c.ax === 'x', dx = X ? c.dir : 0, dz = X ? 0 : c.dir;
+  const along = (X ? p.x : p.z) + c.dir * c.sp * dt, lane = laneOf(c.ax, c.rc, c.dir), kk = Math.min(1, dt * 3);
+  if (X) { p.x = along; p.z += (lane - p.z) * kk; } else { p.z = along; p.x += (lane - p.x) * kk; }   // sanft zurück in die Spur
+  o.g.rotation.set(0, Math.atan2(-dz, dx), 0);
+  if (along * c.dir > MAP - 6) {   // Straße endet: wenden
+    const ol = laneOf(c.ax, c.rc, -c.dir);
+    c.curve = curve(p.x, p.z, dx, dz, X ? along : ol, X ? ol : along, -dx, -dz, 2.2, { dir: -c.dir }); c.pending = null; return;
+  }
+  if (c.pending) { if ((along - c.pending.at) * c.dir >= 0) { c.curve = c.pending.cv; c.pending = null; } return; }
+  for (const r of ROADS) {   // Kreuzung voraus: geradeaus oder abbiegen?
+    const ahead = (r - along) * c.dir;
+    if (ahead <= 0 || ahead > 8 || r === c.decided) continue;
+    c.decided = r;
+    if (Math.random() < 0.35) {
+      const nd = Math.random() < 0.5 ? 1 : -1, nAx = X ? 'z' : 'x', nl = laneOf(nAx, r, nd), ol = laneOf(c.ax, c.rc, c.dir);
+      const kx = X ? nl : ol, kz = X ? ol : nl, nx = X ? 0 : nd, nz = X ? nd : 0;   // k = Schnittpunkt der beiden Spuren
+      const sx = kx - dx * TURN_R, sz = kz - dz * TURN_R, at = X ? sx : sz;
+      if ((at - along) * c.dir > 0.2)
+        c.pending = { at, cv: curve(sx, sz, dx, dz, kx + nx * TURN_R, kz + nz * TURN_R, nx, nz, TURN_R * 0.55, { ax: nAx, rc: r, dir: nd }) };
+    }
+    break;
+  }
+}
+
 // ---------- Physik light: Kippen, Verkanten, Verhaken ----------
 const _pv = new THREE.Vector3(), _ax = new THREE.Vector3(), _qt = new THREE.Quaternion(), _tv = new THREE.Vector3();
 let jamHintShown = false;
@@ -820,7 +1090,9 @@ function startFall(o, h) {
   o.falling = true; o.state = null; o.by = h; o.vy = o.vy || 0; o.fx = h.x; o.fz = h.z;
   const dx = o.g.position.x - h.x, dz = o.g.position.z - h.z, d = Math.hypot(dx, dz);
   o.axis = d > 0.01 ? new THREE.Vector3(-dz, 0, dx).normalize() : new THREE.Vector3(1, 0, 0);
-  if (o.boss) { shakeT = 4; bossEaten = true; flash('ENDBOSS GESCHLUCKT!'); }
+  if (o.v >= 10) puff(o.g.position.x, o.g.position.z, o.v >= 40 ? 8 : 5, Math.min(2.6, 0.45 + o.r * 0.22), o.r * 0.6);   // Staubwolke
+  if (o.boss) { shake(4, 0.25); bossEaten = true; flash('ENDBOSS GESCHLUCKT!'); SND.rumble(); puffRing(h, 18); }
+  else if (h.isPlayer && o.v >= 25) { shake(0.35, 0.1 + Math.min(0.1, o.v / 2000)); SND.thud(Math.min(1, o.v / 300)); }
 }
 function startTip(o, h) {
   Object.assign(o, { state: 'tip', by: h, theta: 0, thv: 0, jam: false, slip: false, shake: 0, wob: 0, vy: 0,
@@ -849,7 +1121,8 @@ function tipUpdate(o, dt) {
     o.wob = h.speed > 1 ? (Math.random() - 0.5) * 0.05 : 0;
   } else {
     const Leff = effLen(o);
-    const jamA = (!o.slip && Leff > R * 0.98) ? Math.acos(clamp(R / Leff, 0, 1)) : 99;   // Winkel, bei dem das andere Ende an die Wand stößt
+    // Winkel, bei dem das andere Ende an die Wand stößt (mindestens 0,2 = sichtbar schräg)
+    const jamA = (!o.slip && Leff > R) ? Math.max(0.2, Math.acos(clamp(R / Leff, 0, 1))) : 99;
     o.thv += (3 + 6 * o.theta) * dt; o.theta += o.thv * dt;
     if (o.theta >= jamA) {                                // verkantet!
       o.theta = jamA; o.thv = 0;
@@ -857,7 +1130,7 @@ function tipUpdate(o, dt) {
       o.jam = true;
       o.shake += h.speed * dt;
       o.wob = h.speed > 1 ? (Math.random() - 0.5) * 0.09 : 0;
-      if (o.shake > 1.5 + Leff * 0.8) { o.slip = true; o.jam = false; }
+      if (o.shake > 1.05 + Leff * 0.56) { o.slip = true; o.jam = false; }   // genug gewackelt (an das langsamere Loch angepasst)
     } else {
       o.jam = false; o.wob = 0;
       const k = Math.min(1, dt * (0.6 + o.theta)) * 0.5;  // rutscht Richtung Mitte
@@ -881,14 +1154,30 @@ function updateVisuals(dt, now) {
   for (const h of holes) {
     h.grp.position.set(h.x, 0, h.z); h.grp.scale.set(h.rShow, 1, h.rShow);
     if (h.skin.spin) { h.rim.rotation.z += dt * h.skin.spin; h.glow.rotation.z = h.rim.rotation.z; }
+    h.pulse = Math.max(0, h.pulse - dt * 3);   // Rand pulst kurz beim Schlucken
+    const ps = 1 + 0.12 * h.pulse, gs = ps * (1 + 0.12 * h.pulse);
+    h.rim.scale.set(ps, ps, 1); h.glow.scale.set(gs, gs, 1);
     h.glow.material.opacity = h.skin.pulse ? 0.55 + 0.45 * Math.sin(now / 180) : 1;
   }
   const zoom = 0.85 + player.rShow * 0.3;
   camera.position.lerp(new THREE.Vector3(player.x, 14 * zoom, player.z + 7 * zoom), Math.min(1, dt * 3));
   camLook.lerp(new THREE.Vector3(player.x, 0, player.z - 0.5), Math.min(1, dt * 5));
   camera.lookAt(camLook);
-  if (shakeT > 0) { shakeT -= dt; const a = Math.min(1, shakeT) * 0.6;
-    camera.position.x += (Math.random() - 0.5) * a; camera.position.y += (Math.random() - 0.5) * a; }
+  if (shakeT > 0) { shakeT -= dt; const a = shakeA * Math.min(1, shakeT / 0.25) * zoom;
+    camera.position.x += (Math.random() - 0.5) * a; camera.position.y += (Math.random() - 0.5) * a; if (shakeT <= 0) shakeA = 0; }
+  updatePuffs(dt);
+  if (waveT > 0) {   // Welle beim Stufenaufstieg
+    waveT -= dt; const kw = 1 - Math.max(0, waveT) / 0.7, s = player.rShow * (1.15 + kw * 1.8);
+    wave.visible = waveT > 0; wave.position.set(player.x, 0.1, player.z); wave.scale.set(s, s, 1); waveMat.opacity = 0.9 * (1 - kw);
+  }
+  // Krone über dem Loch mit den meisten Punkten
+  const cr = $('crown');
+  if (running && leader && leader.alive) {
+    const p = new THREE.Vector3(leader.x, 0.5, leader.z - leader.rShow).project(camera);
+    const vis = p.z < 1 && Math.abs(p.x) < 1.1 && Math.abs(p.y) < 1.1;
+    cr.style.display = vis ? 'block' : 'none';
+    cr.style.left = (p.x + 1) / 2 * innerWidth + 'px'; cr.style.top = (1 - p.y) / 2 * innerHeight - (leader.isPlayer ? 2 : 22) + 'px';
+  } else cr.style.display = 'none';
   // Pfeil zum Endboss, sobald du groß genug bist und er nicht im Bild ist
   const arrow = $('arrow');
   if (running && !bossEaten && player.rShow >= BOSS.s / 0.95) {
@@ -926,33 +1215,57 @@ function updateVisuals(dt, now) {
     const vis = p.z < 1 && Math.abs(p.x) < 1.1 && Math.abs(p.y) < 1.1;
     b.tag.style.display = vis ? 'block' : 'none';
     b.tag.style.left = (p.x + 1) / 2 * innerWidth + 'px'; b.tag.style.top = (1 - p.y) / 2 * innerHeight + 'px';
+    // grün = Beute (du kannst es schlucken), rot = Gefahr (es kann dich schlucken)
+    const rel = !player.alive ? '' : player.rShow >= b.rShow * 1.25 ? 'prey' : b.rShow >= player.rShow * 1.25 ? 'danger' : '';
+    if (rel !== b.rel) { b.rel = rel; b.tag.className = 'tag ' + rel; }
   }
 }
 
+function podium(ranked, sub) {   // Siegerpodest: Platz 2 links, 1 in der Mitte, 3 rechts
+  return `<div class="podium">${[1, 0, 2].filter(i => ranked[i]).map(i => { const h = ranked[i];
+    return `<div class="pod p${i + 1} ${h.isPlayer ? 'me' : ''}">${i === 0 ? `<div class="pcrown">${CROWN}</div>` : ''}
+      <i style="background:${skinCss(h.skin)}"></i><b>${h.name}</b><small>${sub(h)}</small><div class="step">${i + 1}</div></div>`; }).join('')}</div>`;
+}
 function endRound() {
-  running = false; drag.on = false; joy.style.display = 'none';
-  const ranked = [...holes].sort((a, b) => b.score - a.score);
-  const place = ranked.indexOf(player) + 1;
-  const thr = starScores();
-  const stars = thr.filter(s => player.score >= s).length;
-  const before = totalStars();
-  if (stars > starsFor(diffKey)) LS.set(`stars-${LEVEL}-${diffKey}`, stars);
-  const best = Math.max(player.score, LS.get(`best-${LEVEL}-${diffKey}`, 0));
-  LS.set(`best-${LEVEL}-${diffKey}`, best);
-  const after = totalStars();
-  const unlocked = SKINS.filter(s => s.stars > before && s.stars <= after);
+  if (!running) return;
+  running = false; drag.on = false; joy.style.display = 'none'; hideCombo(); $('crown').style.display = 'none';
+  const solo = modeKey === 'solo', battle = modeKey === 'battle';
+  const ranked = battle ? [...holes.filter(h => !h.out).sort((a, b) => b.score - a.score), ...holes.filter(h => h.out).sort((a, b) => a.place - b.place)]
+    : [...holes].sort((a, b) => b.score - a.score);
+  const place = ranked.indexOf(player) + 1, pct = eatenValue / TOTAL_VALUE;
+  let stars, rule;
+  if (solo) { stars = SOLO_STARS.filter(f => pct >= f).length; rule = 'Sterne ab ' + SOLO_STARS.map(f => Math.round(f * 100) + '%').join(' / '); }
+  else if (battle) { stars = place === 1 ? (player.kills >= 2 ? 3 : 2) : place === 2 ? 1 : 0; rule = '★ Top 2 · ★★ Sieg · ★★★ Sieg mit 2 Kills'; }
+  else { const thr = starScores(); stars = thr.filter(s => player.score >= s).length; rule = 'Sterne ab ' + thr.join(' / ') + ' Punkten'; }
+  const before = totalStars(), key = starKey(modeKey, diffKey), bestKey = key.replace('stars', 'best');
+  if (stars > LS.get(key, 0)) LS.set(key, stars);
+  const val = solo ? Math.floor(pct * 100) : player.score, best = Math.max(val, LS.get(bestKey, 0));
+  LS.set(bestKey, best);
+  const after = totalStars(), unlocked = SKINS.filter(s => s.stars > before && s.stars <= after);
+  const title = battle ? (place === 1 ? 'Gewonnen!' : player.out ? 'Ausgeschieden!' : 'Zeit um!') : 'Zeit um!';
+  const kills = h => h.kills + (h.kills === 1 ? ' Kill' : ' Kills');
+  const sub = battle ? h => h.out ? 'raus' : kills(h) : h => h.score + ' Punkte';
   card.innerHTML = `
-    <h1>Zeit um!</h1>
+    <h1>${title}</h1>
+    ${solo ? `<div class="big">${Math.floor(pct * 100)}%</div><p>der Vorstadt geschluckt</p>` : podium(ranked, sub)}
     <div class="stars">${[0, 1, 2].map(i => `<span class="${i < stars ? '' : 'off'}">★</span>`).join('')}</div>
-    <p><b>${player.score} Punkte</b> · Platz ${place} von ${holes.length} · ${D.label}<br>${Math.round(eaten / TOTAL * 100)}% der Vorstadt geschluckt${bossEaten ? ' · Endboss besiegt!' : ''}</p>
+    <p><b>${player.score} Punkte</b>${solo ? '' : ` · Platz ${place} von ${holes.length} · ${D.label}`}
+      ${solo ? '' : `<br>${Math.floor(pct * 100)}% der Vorstadt geschluckt`}${bossEaten ? ' · Endboss besiegt!' : ''}
+      ${battle && player.out ? `<br>${player.by.name} hat dich geschluckt` : ''}</p>
     ${unlocked.length ? `<div class="unlock">Neuer Skin: ${unlocked.map(s => s.name).join(', ')}!</div>` : ''}
-    <div id="ranks">${ranked.map((h, i) => `<div><span>${i + 1}. ${h.name}</span><span>${h.score}</span></div>`).join('')}</div>
-    <p class="small">Bestwert ${best} · Sterne ab ${thr.join(' / ')} Punkten</p>
-    <button class="go" onclick="location.reload()">Nochmal</button>`;
+    ${battle ? `<div id="ranks">${ranked.map((h, i) => `<div><span>${i + 1}. ${h.name}</span><span>${h.out ? (h.by.isPlayer ? 'von dir' : 'von ' + h.by.name) + ' geschluckt' : kills(h)}</span></div>`).join('')}</div>` : ''}
+    <p class="small">Bestwert ${best}${solo ? '%' : ''} · ${rule}</p>
+    <div class="btns"><button class="go" id="again">Nochmal</button><button class="go alt" id="menu">Menü</button></div>`;
+  // Neustart = Seite neu laden (frische Stadt); „Nochmal“ startet danach sofort wieder
+  $('again').onclick = () => { try { sessionStorage.setItem('lochfrass-auto', '1'); } catch {} location.reload(); };
+  $('menu').onclick = () => location.reload();
   $('overlay').style.display = 'flex';
+  SND.jingle(stars);
 }
 
-renderStart();
+let autoStart = false;
+try { autoStart = !!sessionStorage.getItem('lochfrass-auto'); sessionStorage.removeItem('lochfrass-auto'); } catch {}
+if (autoStart) startGame(); else renderStart();
 let last = performance.now();
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
@@ -966,10 +1279,22 @@ requestAnimationFrame(loop);
 
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 
-// Test-Helfer: __lf.sim(150, true) spielt eine Runde im Schnelldurchlauf mit Autopilot
-window.__lf = { player, holes, objects, TOTAL_VALUE, starScores, setGrowth: (g, e = GROWTH_EXP) => { GROWTH = g; GROWTH_EXP = e; },
-  sim(sec, auto = false) { autopilot = auto; if (!running) startGame(); for (let t = 0; t < sec && running; t += 1 / 30) update(1 / 30); autopilot = false;
-    return { score: player.score, r: player.r.toFixed(1), bots: bots.map(b => b.name + ':' + b.score), stars: starScores(), total: TOTAL_VALUE }; } };
+// Test-Helfer: __lf.mode('solo') wählt den Modus, __lf.sim(120, true) spielt eine Runde im Schnelldurchlauf mit Autopilot
+window.__lf = { player, holes, objects, TOTAL, TOTAL_VALUE, starScores, setGrowth: (g, e = GROWTH_EXP) => { GROWTH = g; GROWTH_EXP = e; },
+  mode(m, d = diffKey) { modeKey = m; diffKey = d; D = DIFFS[d]; },
+  ap(speed = 1, smart = 1) { AP.speed = speed; AP.smart = smart; },
+  sim(sec, auto = false) {
+    autopilot = auto; if (!running) startGame();
+    const reach = {};   // wann welche Stufe erreicht wurde (Sekunden)
+    for (let t = 0; t < sec && running; t += 1 / 30) {
+      update(1 / 30);
+      for (let s = 1; s < STAGES.length; s++) if (!reach[s] && player.mass >= massFor(STAGES[s][0])) reach[s] = Math.round(elapsed);
+    }
+    autopilot = false;
+    return { t: Math.round(elapsed), score: player.score, pct: Math.round(eatenValue / TOTAL_VALUE * 100), r: player.r.toFixed(2), kills: player.kills,
+      stages: Object.entries(reach).map(([s, t]) => STAGES[s][1].split(/[ &]/)[0] + ' ' + t).join(', '),
+      bots: bots.map(b => b.name + ':' + b.score + (b.out ? ' raus' : '')), stars: starScores(), total: TOTAL_VALUE };
+  } };
 </script>
 </body>
 </html>

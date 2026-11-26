@@ -26,7 +26,14 @@ Live: https://wordenbeck.github.io/lochfrass/
 
 Sterne-Grenzen sind Anteile am Gesamtwert der Karte (Leicht 10/20/35 %, Normal 15/30/50 %, Schwer 20/40/60 %; Normal ≈ 2.050 / 4.100 / 6.800 Punkte).
 
-Wachstum: Radius = 0,6 + 0,031 · Punkte^0,625. Zeitplan mit perfektem Autopilot: Autos 1:30, Häuser 3:45, Wohnblöcke 5:45, Endboss 7:00. Ein Mensch braucht etwa das 1,3- bis 1,5-Fache.
+Wachstum: Radius = 0,6 + 0,06 · XP^0,58 (XP = gefressene Masse). Zeitplan mit perfektem Autopilot: Autos 0:35, Bäume 0:45, Häuser 2:20, Wohnblöcke 3:15, Endboss 3:40. Ein Mensch braucht etwa das 1,3- bis 1,5-Fache.
+
+## XP & Stufen
+1 Kleinkram & Menschen · 2 Laternen & Bänke · 3 Büsche · 4 Autos · 5 Bäume · 6 Brunnen & Gartenhäuser · 7 Häuser · 8 Wohnblöcke · 9 Endboss.
+Die Anzeige oben links zeigt Stufe, XP bis zur nächsten Stufe und was dann dazukommt. Beim Aufstieg kommen eine Einblendung und ein kleiner Wackler.
+
+## Icon
+`icon.svg` (Quelle) → `icon-180/192/512.png` per Headless-Chrome + sips. `manifest.json` für den Homescreen (Vollbild).
 
 ## Skins
 Minze (0★) · Koralle (1★) · Gold (2★) · Bonbon (3★) · Regenbogen (5★) · Lava (7★, pulsiert) · Galaxie (9★)
@@ -41,7 +48,7 @@ Minze (0★) · Koralle (1★) · Gold (2★) · Bonbon (3★) · Regenbogen (5�
 | 2 | Level-System: Welten als Daten, Levelauswahl, Freischaltung | 1–2 Sessions |
 | 3 | Level 2–5 mit je 10–15 neuen Objekten | 3–4 Sessions |
 | 4 | Feinschliff: Partikel, Wackeln, Sound (optional) | 1 Session |
-| 5 | PWA: Manifest, Icon, offline spielbar | 1 Session |
+| 5 | PWA: offline spielbar (Manifest + Icon ✅) | 0,5 Session |
 
 Rest: ca. 6–9 Sessions.
 

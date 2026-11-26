@@ -11,6 +11,10 @@ const fmt = n => Math.round(n).toLocaleString('de-DE');
 // ================= Welten =================
 const WORLDS = [
   { id: 'vorstadt', name: 'Vorstadt', gen: 'der Vorstadt', icon: '🏘️', boss: 'Riesenturm' },
+  { id: 'bucht', name: 'Sonnenbucht', gen: 'der Sonnenbucht', icon: '🏖️', boss: 'Leuchtturm' },
+  { id: 'hof', name: 'Bauernhof', gen: 'des Bauernhofs', icon: '🚜', boss: 'Windmühle' },
+  { id: 'rummel', name: 'Rummelplatz', gen: 'des Rummelplatzes', icon: '🎡', boss: 'Freifallturm' },
+  { id: 'mond', name: 'Mondbasis', gen: 'der Mondbasis', icon: '🚀', boss: 'Rakete' },
 ];
 
 // ================= Einstellungen =================
@@ -24,15 +28,16 @@ const MODES = {
 const SOLO_STARS = [0.25, 0.5, 0.8];            // Anteil der Welt für 1/2/3 Sterne im Solo-Modus
 // Schwierigkeit: s0/s1 = Tempo der Gegner am Anfang/Ende der Anlaufzeit (ramp, Sekunden)
 // grow = wie schnell Gegner wachsen (1 = so schnell wie du), huntDelay = ab wann sie dich im Klassik-Modus jagen, battleHunt = dasselbe im Battle-Modus
+// lead = Bremse: Gegner, die schon größer sind als du, wachsen nur mit diesem Anteil weiter (damit kein Bot zum Riesen wird)
 // stars = Punkte für 1/2/3 Sterne im Klassik-Modus, als Vielfaches des Weltwerts (mit Combo geht es über 1 hinaus)
 const DIFFS = {
-  leicht: { label: 'Leicht', bots: 3, grow: 0.75, s0: 0.55, s1: 0.8, ramp: 90, huntPlayer: false, huntDelay: 999, battleHunt: 50, smart: 0.55,
+  leicht: { label: 'Leicht', bots: 3, grow: 0.75, lead: 0.4, s0: 0.55, s1: 0.8, ramp: 90, huntPlayer: false, huntDelay: 999, battleHunt: 50, smart: 0.55,
     stars: [0.45, 1.4, 2.9], desc: 'Gegner bleiben gemütlich und jagen dich nie.',
     bdesc: 'Gegner bleiben gemütlich und jagen dich erst ab Sekunde 50.' },
-  normal: { label: 'Normal', bots: 3, grow: 0.95, s0: 0.65, s1: 0.92, ramp: 60, huntPlayer: true, huntDelay: 40, battleHunt: 30, smart: 0.8,
+  normal: { label: 'Normal', bots: 3, grow: 0.95, lead: 0.55, s0: 0.65, s1: 0.92, ramp: 60, huntPlayer: true, huntDelay: 40, battleHunt: 30, smart: 0.8,
     stars: [0.4, 1.2, 2.6], desc: 'Gegner starten langsam, werden flotter und jagen dich ab Sekunde 40.',
     bdesc: 'Gegner starten langsam, werden flotter und jagen dich ab Sekunde 30.' },
-  schwer: { label: 'Schwer', bots: 4, grow: 1.05, s0: 0.75, s1: 0.95, ramp: 40, huntPlayer: true, huntDelay: 25, battleHunt: 20, smart: 0.9,
+  schwer: { label: 'Schwer', bots: 4, grow: 1.05, lead: 0.75, s0: 0.75, s1: 0.95, ramp: 40, huntPlayer: true, huntDelay: 25, battleHunt: 20, smart: 0.9,
     stars: [0.3, 0.9, 2.0], desc: '4 Gegner, schnell auf Tempo, jagen dich schon ab Sekunde 25.',
     bdesc: '4 Gegner, schnell auf Tempo, jagen dich ab Sekunde 20.' },
 };
@@ -577,8 +582,10 @@ function startGame() {
 const shake = (t, a) => { shakeT = Math.max(shakeT, t); shakeA = Math.max(shakeA, a); };
 // Combo: schnell hintereinander fressen gibt mehr Punkte (die XP bleiben gleich, damit das Wachstum fair bleibt)
 const COMBO_TIME = 1.4, comboMult = n => n >= 30 ? 5 : n >= 20 ? 4 : n >= 12 ? 3 : n >= 5 ? 2 : 1;
+const botLead = b => b.r > player.r ? D.lead : 1;   // größer als du? Dann wächst der Gegner langsamer
+const WORLD_GROW = ENV.grow ?? 1;   // Welten mit weiten Wegen (Felder, Krater) geben pro Ding etwas mehr Wachstum
 function eat(h, o) {
-  h.mass += h.isPlayer ? o.v : o.v * D.grow;
+  h.mass += (h.isPlayer ? o.v : o.v * D.grow * botLead(h)) * WORLD_GROW;
   h.cn++; h.ct = COMBO_TIME;
   const m = comboMult(h.cn), pts = o.v * m;
   h.score += pts; h.pulse = Math.min(1, h.pulse + (o.v >= 10 ? 0.7 : 0.3));
@@ -593,7 +600,7 @@ function eat(h, o) {
 }
 function swallowHole(a, b) {   // großes Loch schluckt kleines Loch
   const dbl = elapsed - a.lastKill < 4, pts = 20 + Math.round(b.mass * 0.5) + (dbl ? 50 : 0);
-  a.mass += b.mass * 0.5 + 20; a.score += pts; a.kills++; a.lastKill = elapsed; a.pulse = 1;
+  a.mass += (b.mass * 0.5 + 20) * (a.isPlayer ? 1 : botLead(a)); a.score += pts; a.kills++; a.lastKill = elapsed; a.pulse = 1;
   b.alive = false; b.grp.visible = false; b.by = a; b.cn = 0; b.cm = 1; b.ct = 0;
   if (modeKey === 'battle') { b.out = true; b.place = holes.filter(h => !h.out).length + 1; } else b.dead = 3;
   feed(a, b, dbl);
@@ -765,6 +772,7 @@ function updateVisuals(dt, now) {
   if (shakeT > 0) { shakeT -= dt; const a = shakeA * Math.min(1, shakeT / 0.25) * zoom;
     camera.position.x += (Math.random() - 0.5) * a; camera.position.y += (Math.random() - 0.5) * a; if (shakeT <= 0) shakeA = 0; }
   updatePuffs(dt);
+  if (BOSS.anim && !BOSS.gone) BOSS.anim(dt, now / 1000);   // z. B. Windmühlenflügel, Leuchtturm-Licht
   if (waveT > 0) {   // Welle beim Stufenaufstieg
     waveT -= dt; const kw = 1 - Math.max(0, waveT) / 0.7, s = player.rShow * (1.15 + kw * 1.8);
     wave.visible = waveT > 0; wave.position.set(player.x, 0.1, player.z); wave.scale.set(s, s, 1); waveMat.opacity = 0.9 * (1 - kw);

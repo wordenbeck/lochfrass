@@ -1,6 +1,6 @@
 # Lochfrass! – Plan
 
-Eigenes Loch-Schluck-Spiel für das iPad als PWA. Werbefrei, kostenlos, nur für Thomas.
+Eigenes Loch-Schluck-Spiel für das iPad als PWA. Werbefrei, kostenlos, für Thomas und die Familie.
 Die Spielmechanik kennt man aus den „Loch“-io-Spielen, Name, Welten und Comic-Look sind eigene.
 Das Spielkonzept steht in `KONZEPT.md`.
 
@@ -8,77 +8,81 @@ Live: https://wordenbeck.github.io/lochfrass/
 
 ## Entscheidungen
 - Gerät: iPad (Touch-Joystick: Finger irgendwo ablegen und ziehen), am Mac zusätzlich Maus/WASD
-- Runde: 2 Minuten wie im Original, drei Modi: Klassik (Punkte, Respawn nach 3 s), Solo (ohne Gegner, % der Stadt), Battle (wer geschluckt wird, ist raus)
-- Schnelles Wachstum: Autos nach rund 20 s, Häuser nach rund 1 Minute, Endboss gegen Ende der Runde
-- Jedes Level hat einen Endboss: ein riesiges Hochhaus, das nur der Spieler schlucken kann (+1.500 Punkte)
-- Physik light: Objekte kippen über die Lochkante, lange Dinge verkanten sich (Hin-und-her-Wackeln löst sie), zu große verhaken sich am Rand
-- Schwierigkeit wählbar (Leicht / Normal / Schwer). Gegner starten immer langsam und werden über eine Anlaufzeit schneller und schlauer
-- Sterne: 21 pro Welt (Klassik 3 × 3, Battle 3 × 3, Solo 3), damit lassen sich Loch-Skins freischalten
-- Welten: 5 verschiedene (Vorstadt, Innenstadt, Strand & Hafen, Freizeitpark, Bauernhof)
-- Look: Comic (Cel-Shading mit 3 Lichtstufen, dunkle Konturlinien, kräftige Farben, runde Formen)
-- Technik: eine HTML-Datei, Three.js über CDN, Sound per Web Audio (ohne Dateien), keine Build-Tools, Hosting auf GitHub Pages (0 €)
+- Runde: 2 Minuten, drei Modi: Klassik (Punkte, Respawn nach 3 s), Solo (ohne Gegner, % der Welt), Battle (wer geschluckt wird, ist raus)
+- Spielerprofile: „Wer spielt?“ beim Start, jeder hat eigene Punkte, Sterne und eigenes Loch. Alte Spielstände wurden zu „Spieler 1“
+- Jede Welt hat einen Endboss, den nur der Spieler schlucken kann (+1.500 Punkte). Er versinkt senkrecht im Loch
+- Echte Physik (Rapier): Dinge kippen über die Lochkante, verkanten sich und fallen hinein. Häuser haben 1–3 Etagen (Hochhäuser mehr), die einzeln abbrechen
+- Schwierigkeit wählbar (Leicht / Normal / Schwer). Gegner starten langsam und werden über eine Anlaufzeit schneller und schlauer
+- Look: Comic (Cel-Shading, dunkle Konturlinien, kräftige Farben, runde Formen)
+- Technik: `index.html` plus JS-Module, Three.js und Rapier über CDN, Sound per Web Audio (ohne Dateien), keine Build-Tools, Hosting auf GitHub Pages (0 €)
+
+## Welten
+Jede Welt ist ein eigenes Modul `js/world-<id>.js` mit `env` (Himmel, Licht, Schwerkraft, Staubfarbe, Wachstum) und `create()`.
+Alle Welten sind von Anfang an spielbar. Weltwert = Summe aller Objektwerte, daran hängen die Sterne-Schwellen.
+
+| Welt | Endboss | Besonderheit | Objekte | Weltwert | Wachstum |
+|---|---|---|---|---|---|
+| 🏘️ Vorstadt | Riesenturm | Häuser, Wohnblöcke, Autoverkehr | 1.415 | 8.621 | 1,0 |
+| 🏖️ Sonnenbucht | Leuchtturm (Lichtkegel dreht sich) | Strand, Hafen mit Containern, Hotels, Buggys, Krabben | 1.408 | 8.885 | 1,0 |
+| 🚜 Bauernhof | Windmühle (Flügel drehen sich) | Scheunen, Silos, Felder, Weiden, Traktoren, Tiere | 1.567 | 8.669 | 1,2 |
+| 🎡 Rummelplatz | Freifallturm (Gondel fällt) | Karussells, Riesenrad, Autoscooter, Zirkus, Geisterbahn | 1.395 | 8.282 | 1,0 |
+| 🚀 Mondbasis | Rakete | wenig Schwerkraft, Kuppeln, Module, Rover, Kristalle, Krater | 1.487 | 8.970 | 1,25 |
+
+„Wachstum“ ist ein Faktor auf die XP pro geschlucktem Ding. Bauernhof und Mondbasis haben weitere Wege zwischen den Dingen, deshalb wächst man dort pro Ding etwas mehr. Die Punkte bleiben davon unberührt.
 
 ## Schwierigkeit
-| | Gegner | Tempo Start → Ende | Anlaufzeit | jagen dich ab (Klassik / Battle) |
-|---|---|---|---|---|
-| Leicht | 3 | 55 % → 80 % | 90 s | nie / Sekunde 50 |
-| Normal | 3 | 65 % → 92 % | 60 s | Sekunde 40 / 30 |
-| Schwer | 4 | 75 % → 95 % | 40 s | Sekunde 25 / 20 |
+| | Gegner | Tempo Start → Ende | Anlaufzeit | jagen dich ab (Klassik / Battle) | Gegner-Wachstum | Bremse |
+|---|---|---|---|---|---|---|
+| Leicht | 3 | 55 % → 80 % | 90 s | nie / Sekunde 50 | 75 % | 40 % |
+| Normal | 3 | 65 % → 92 % | 60 s | Sekunde 40 / 30 | 95 % | 55 % |
+| Schwer | 4 | 75 % → 95 % | 40 s | Sekunde 25 / 20 | 105 % | 75 % |
+
+Bremse: Ein Gegner, der schon größer ist als du, wächst nur noch mit diesem Anteil weiter. So wird kein Bot zum Riesen, der dich am Ende der Runde frisst.
 
 ## Sterne
-- Klassik: Punkte als Vielfaches des Stadtwerts (Vorstadt 9.481), die Punkte enthalten den Combo-Faktor.
-  Leicht ≈ 3.050 / 9.000 / 19.900 · Normal ≈ 2.450 / 7.000 / 14.050 · Schwer ≈ 2.000 / 5.000 / 9.950
-- Solo: 20 / 35 / 55 % der Stadt (nach Wert)
+- Klassik: Punkte als Vielfaches des Weltwerts, die Punkte enthalten den Combo-Faktor. Leicht 0,45 / 1,4 / 2,9 · Normal 0,4 / 1,2 / 2,6 · Schwer 0,3 / 0,9 / 2,0
+- Solo: 25 / 50 / 80 % der Welt (nach Wert)
 - Battle: ★ unter den Top 2 · ★★ Sieg · ★★★ Sieg mit mindestens 2 eigenen Kills
 
 ## Wachstum
-Radius = 0,6 + 0,165 · XP^0,55 (XP = gefressene Masse). Lochtempo = 5 + 0,75 · Radius.
-Gemessen mit dem Autopilot (Solo):
+Radius = 0,6 + 0,28 · XP^0,5 (XP = gefressene Masse). Lochtempo = 5 + 0,75 · Radius.
+Gemessen mit dem Autopilot im Tempo eines Durchschnittsspielers (`__lf.ap(0.8, 0.8)`, Klassik, Normal), Endboss geschluckt nach:
 
-| Spielertyp | Autos | Häuser | Endboss | Stadt geschluckt |
-|---|---|---|---|---|
-| perfekt | 0:13 | 0:39–0:44 | 0:59–1:09 | 94–98 % |
-| stark (90 %) | 0:17–0:19 | 0:53–0:57 | 1:20 | 56–92 % |
-| durchschnittlich (80 %) | 0:20–0:22 | 1:07 | 1:41 | 24–47 % |
+| Welt | Mittel | Spanne | Läufe |
+|---|---|---|---|
+| Vorstadt | 1:27 | 1:19–1:41 | 5 |
+| Sonnenbucht | 1:29 | 1:24–1:29 | 3 |
+| Bauernhof | 1:20 | 1:06–1:45 | 4 |
+| Rummelplatz | 1:33 | 1:22–1:40 | 4 |
+| Mondbasis | 1:26 | 1:05–1:56 | 5 |
+
+Erste Autos nach etwa 10–15 s, erste Häuser nach etwa 30–45 s. Seit der Gegner-Bremse wurde der Autopilot in keinem dieser Läufe gefressen.
 
 ## XP & Stufen
 1 Kleinkram & Menschen · 2 Laternen & Bänke · 3 Büsche · 4 Autos · 5 Bäume · 6 Brunnen & Gartenhäuser · 7 Häuser · 8 Wohnblöcke · 9 Endboss.
-Die Anzeige oben links zeigt Stufe, XP bis zur nächsten Stufe und was dann dazukommt. Beim Aufstieg: Einblendung, Fanfare, Welle und Wolkenkranz.
+Die Anzeige oben links zeigt Stufe und XP bis zur nächsten Stufe. Beim Aufstieg: „Stufe N!“, Fanfare, Welle und Wolkenkranz.
+
+## Loch-Looks
+- Skins (nach Sternen): Minze (0★) · Koralle (1★) · Gold (3★) · Bonbon (5★) · Regenbogen (8★) · Lava (12★) · Galaxie (16★)
+- Avatare (nach Punkten, gesammelt über alle Runden): Dino 5.000 · Hai 20.000 · Frosch 40.000 · Krake 70.000 · Drache 110.000 · Monster 160.000 · Roboter 220.000 · UFO 300.000 · Vulkan 400.000 · Schwarzes Loch 500.000
 
 ## Icon
 `icon.svg` (Quelle) → `icon-180/192/512.png` per Headless-Chrome + sips. `manifest.json` für den Homescreen (Vollbild).
 
-## Skins
-Minze (0★) · Koralle (1★) · Gold (3★) · Bonbon (5★) · Regenbogen (8★) · Lava (12★, pulsiert) · Galaxie (16★)
-
 ## Stand
 | Phase | Inhalt | Status |
 |---|---|---|
-| 0 | Prototyp Level 1 | ✅ |
-| 1a | Comic-Grafik, Schwierigkeit, Skins, Sterne | ✅ |
-| 1b | Endboss, Kipp-/Verkant-Physik, XP-Anzeige, Icon | ✅ |
-| 1c | Neues Konzept: 2-Minuten-Runde, Karte 180 × 180 (~1.240 Objekte), schnelles Wachstum, Modi Klassik/Solo/Battle, Beute-/Gefahr-Farben, Krone, Kill-Meldungen, Doppel-Kill, Combo, Schluck-Effekte, Sound, Autoverkehr mit Abbiegen, Siegerpodest | ✅ |
-| 1d | Spielgefühl am iPad prüfen: Tempo, Steuerung, Performance, Ton | als Nächstes |
-| 2 | Level-System: Welten als Daten, Levelauswahl, Freischaltung | 1–2 Sessions |
-| 3 | Level 2–5 mit je 10–15 neuen Objekten und eigenem Endboss | 3–4 Sessions |
-| 4 | Feinschliff nach dem iPad-Test | 0,5–1 Session |
-| 5 | PWA: offline spielbar (Manifest + Icon ✅) | 0,5 Session |
-
-Rest: ca. 5–8 Sessions.
-
-## Die 5 Level
-| # | Welt | Objekte (klein → groß) |
-|---|---|---|
-| 1 | Vorstadt | Hütchen, Briefkästen, Blumenkübel, Schilder, Menschen, Tonnen, Laternen, Bänke, Büsche, Bäume, Autos, Häuser, Wohnblöcke · Endboss: Riesenturm |
-| 2 | Innenstadt | Tauben, Ampeln, Kioske, Busse, Hochhäuser |
-| 3 | Strand & Hafen | Liegestühle, Schirme, Boote, Container, Kräne, Leuchtturm |
-| 4 | Freizeitpark | Buden, Autoscooter, Karussell, Achterbahn, Riesenrad |
-| 5 | Bauernhof | Hühner, Kühe, Heuballen, Traktoren, Scheune, Silo |
+| 0–1c | Prototyp, Comic-Grafik, Modi, Combo, Sound, Autoverkehr, Siegerpodest | ✅ |
+| 2 | Echte Physik, Etagen-Häuser, Spielerprofile, Avatare, schnelleres Wachstum | ✅ |
+| 3 | Welten 2–5 mit eigenem Endboss, Gegner-Bremse, Wachstum je Welt abgestimmt | ✅ |
+| 4 | Spielgefühl am iPad prüfen: Tempo, Steuerung, Performance der neuen Welten | als Nächstes |
+| 5 | PWA: offline spielbar (Manifest + Icon ✅, Service Worker fehlt) | offen |
 
 ## Testen
 Lokal: Server „lochfrass“ aus `.claude/launch.json` (Port 8060). In der Browser-Konsole:
 - `__lf.mode('solo')` oder `__lf.mode('battle', 'schwer')` wählt Modus und Schwierigkeit
 - `__lf.ap(0.8, 0.8)` lässt den Autopilot wie einen durchschnittlichen Menschen spielen (Tempo, Klugheit)
 - `__lf.sim(120, true)` spielt eine Runde im Schnelldurchlauf und meldet, wann welche Stufe erreicht wurde
+- Welt wechseln: im Profil (`lochfrass-p-<id>`) das Feld `world` setzen und neu laden
 
-Achtung: Testrunden speichern Sterne im Browser. Danach die `lochfrass-`-Einträge im localStorage löschen.
+Achtung: Testrunden speichern Punkte und Sterne im Browser. Danach die `lochfrass-`-Einträge im localStorage löschen.

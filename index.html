@@ -177,13 +177,13 @@
   .mebar b { display: block; font-size: 22px; font-weight: 900; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .mebar small { display: block; font-size: 14px; font-weight: 800; color: #6b7385; }
   .segb.mini { flex: none; font-size: 15px; padding: 7px 12px; border-radius: 14px; box-shadow: 0 3px 0 #1d2433; }
-  .worlds { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-  .wcard { font: inherit; cursor: pointer; width: 92px; background: #fff; border: 3px solid #1d2433; border-radius: 16px; padding: 6px 2px 5px;
+  .worlds { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
+  .wcard { font: inherit; cursor: pointer; min-width: 0; background: #fff; border: 3px solid #1d2433; border-radius: 16px; padding: 6px 2px 5px;
     box-shadow: 0 4px 0 #1d2433; color: #1d2433; }
   .wcard:active { transform: translateY(3px); box-shadow: 0 1px 0 #1d2433; }
   .wcard.on { background: #2fd3b9; }
   .wcard .wi { display: block; font-size: 30px; line-height: 1.2; }
-  .wcard b { display: block; font-size: 13px; font-weight: 900; }
+  .wcard b { display: block; font-size: 12px; font-weight: 900; line-height: 1.15; -webkit-hyphens: auto; hyphens: auto; overflow-wrap: break-word; }
   .wcard small { display: block; font-size: 12px; font-weight: 900; color: #e0a400; -webkit-text-stroke: .5px #1d2433; }
   /* Mein Loch */
   .avs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }

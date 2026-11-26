@@ -353,3 +353,17 @@ export function building(x, z, w, d, floors, st = {}) {
   blocked.push([x - rw / 2 - 0.6, x + rw / 2 + 0.6, z - rd / 2 - 0.6, z + rd / 2 + 1.2]);
   return pieces;
 }
+
+// ================= Fahrzeuge und Endboss =================
+// Räder an die Teile-Liste hängen: list = [[x, z], …] (vorne = +x)
+export function wheels(parts, list, r = 0.4, w = 0.3, tire = '#2a2d36', rim = '#d9dde5') {
+  for (const [x, z] of list) parts.push(P(GE.cyl, tire, x, r, z, r, w, r, Math.PI / 2), P(GE.cyl, rim, x, r, z * 1.07, r * 0.45, w, r * 0.45, Math.PI / 2));
+}
+// Endboss anmelden: passt erst ins Loch, wenn das Loch die ganze Grundfläche (Radius footR) umschließt
+export function addBoss(g, x, z, cols, mats, h, footR = 9.5) {
+  const o = add(g, x, z, { v: 1500, boss: true, cols, s: 10, mats });
+  o.h = h; o.footR = footR; o.need = footR + 1; o.fk = 1;
+  setBoss(o); return o;
+}
+// Kegelstumpf mit beliebigen Radien (für Türme, Silos, Raketen …)
+export const tube = (rTop, rBot, h, seg = 28) => new THREE.CylinderGeometry(rTop, rBot, h, seg).toNonIndexed();

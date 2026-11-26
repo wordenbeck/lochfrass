@@ -23,7 +23,7 @@ export let world = null;
 const active = [];
 export function init(gravity = -30) {
   world = new RAPIER.World({ x: 0, y: gravity, z: 0 });
-  DOWN = DOWN_G * Math.abs(gravity);
+  DOWN = DOWN_G * Math.max(30, Math.abs(gravity));   // der Sog nach unten ist überall gleich stark, auch auf dem Mond
   const gb = world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
   world.createCollider(RAPIER.ColliderDesc.cuboid(MAP + 60, 5, MAP + 60).setTranslation(0, -5, 0)
     .setCollisionGroups(G(GROUND, OBJ)).setFriction(0.7), gb);

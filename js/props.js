@@ -1,6 +1,6 @@
 // Lochfrass! – Mehr Details: Garten, Spielplatz, Café, Straßenmöbel, Fahrzeuge, Hunde und Boden-Schmuck
 // Alles im eigenen Comic-Look. Kleine Dinge aus einfachen Formen (wenige Dreiecke), damit es auf dem iPad flüssig bleibt.
-import { THREE, mergeGeometries, INK, R, pick, rnd, P, GE, build, add, cBox, cCyl, cBall, cCone, C, shade, toon, NO_OUTLINE, scene, walkState, wheels } from './kit.js';
+import { THREE, mergeGeometries, INK, R, pick, rnd, P, GE, build, add, cBox, cCyl, cBall, cCone, C, shade, toon, NO_OUTLINE, scene, walkState, wheels, lpick } from './kit.js';
 
 const FLOWERS = ['#ff7ac6', '#ffd23f', '#ff5a4e', '#ffffff', '#9b6bff'];
 const BRIGHT = ['#ff5a4e', '#4f8bff', '#ffd23f', '#2fd3b9', '#ff7ac6', '#ff8a3d'];
@@ -150,20 +150,36 @@ export function busStop(x, z, ry) {   // Wartehäuschen (offen zur lokalen +z-Se
 }
 
 // ================= Fahrzeuge =================
-export function van(x, z, ry, drive) {   // Lieferwagen (vorne = +x)
-  const c = pick(['#ffffff', '#ffd23f', '#4f8bff', '#ff8a3d', '#2fd3b9']);
-  const parts = [P(GE.rbox, c, -0.55, 1.42, 0, 3.4, 1.9, 1.85), P(GE.rbox, c, 1.6, 1.0, 0, 1.3, 1.1, 1.8),
-    P(GE.rbox, '#a8dcf5', 1.05, 1.82, 0, 0.5, 0.7, 1.7), P(GE.box, '#a8dcf5', 0.7, 1.75, 0, 0.6, 0.6, 1.88),
-    P(GE.box, shade(c, 0.75), -0.6, 1.3, 0, 2.6, 0.5, 1.88), P(GE.sphLo, '#fff6c8', 2.24, 0.95, 0.6, 0.12), P(GE.sphLo, '#fff6c8', 2.24, 0.95, -0.6, 0.12),
-    P(GE.sphLo, '#ff4136', -2.26, 0.85, 0.65, 0.1), P(GE.sphLo, '#ff4136', -2.26, 0.85, -0.65, 0.1)];
+export function van(x, z, ry, drive) {   // Lieferwagen (vorne = +x): Fahrerkabine mit Fenstern, Aufkleber mit Logo, Hecktüren
+  const c = pick(['#ffffff', '#ffd23f', '#4f8bff', '#ff8a3d', '#2fd3b9']), glass = '#9fd6f2', dark = '#2f3542', seam = shade(c, 0.8);
+  const dc = c === '#ffffff' ? lpick(['#4f8bff', '#ff5a4e', '#2fd3b9', '#ff8a3d']) : '#ffffff', ic = c === '#ffffff' ? '#ffffff' : c;
+  const parts = [P(GE.rbox, c, -0.55, 1.42, 0, 3.4, 1.9, 1.85), P(GE.rbox, c, 1.6, 1.0, 0, 1.3, 1.1, 1.8), P(GE.box, shade(c, 0.75), -0.55, 0.6, 0, 3.42, 0.2, 1.87),
+    P(GE.box, glass, 1.165, 1.95, 0, 0.03, 0.62, 1.5), P(GE.box, '#ffffff', 1.18, 2.0, 0.4, 0.02, 0.5, 0.07, 0.5, 0, 0),
+    P(GE.box, dark, 2.3, 0.55, 0, 0.16, 0.24, 1.8), P(GE.box, dark, -2.3, 0.55, 0, 0.16, 0.24, 1.86), P(GE.box, dark, 2.26, 0.98, 0, 0.04, 0.26, 0.8),
+    P(GE.box, '#fff6c8', 2.25, 1.15, 0.62, 0.06, 0.16, 0.34), P(GE.box, '#fff6c8', 2.25, 1.15, -0.62, 0.06, 0.16, 0.34),
+    P(GE.box, '#ff4136', -2.26, 1.0, 0.8, 0.05, 0.4, 0.14), P(GE.box, '#ff4136', -2.26, 1.0, -0.8, 0.05, 0.4, 0.14),
+    P(GE.box, '#ffffff', 2.39, 0.55, 0, 0.02, 0.11, 0.4), P(GE.box, '#ffffff', -2.39, 0.6, 0, 0.02, 0.11, 0.4),
+    P(GE.box, seam, -2.26, 1.45, 0, 0.02, 1.6, 0.03), P(GE.box, glass, -2.26, 1.95, 0.42, 0.02, 0.4, 0.6), P(GE.box, glass, -2.26, 1.95, -0.42, 0.02, 0.4, 0.6)];
+  for (const s of [-1, 1]) parts.push(P(GE.box, glass, 0.72, 1.86, s * 0.93, 0.74, 0.56, 0.02), P(GE.box, seam, 0.3, 1.35, s * 0.93, 0.02, 1.25, 0.02),
+    P(GE.box, dc, -1.0, 1.55, s * 0.93, 1.9, 0.8, 0.02), P(GE.cylLo, ic, -1.6, 1.55, s * 0.942, 0.26, 0.02, 0.26, Math.PI / 2, 0, 0),
+    P(GE.box, ic, -0.75, 1.68, s * 0.942, 0.95, 0.08, 0.02), P(GE.box, ic, -0.9, 1.45, s * 0.942, 0.65, 0.08, 0.02),
+    P(GE.box, dark, 1.15, 1.72, s * 1.02, 0.08, 0.26, 0.14), P(GE.box, dark, 1.15, 1.85, s * 0.97, 0.04, 0.04, 0.12));
   wheels(parts, [[1.45, 0.85], [-1.45, 0.85], [1.45, -0.85], [-1.45, -0.85]], 0.42);
   return add(build(parts), x, z, { v: 18, ry, cols: [cBox(2.27, 1.17, 0.93, 0, 1.17)], ...(drive ? { drive } : {}) });
 }
-export function bus(x, z, ry, drive) {   // Stadtbus (vorne = +x)
-  const c = pick(['#ffd23f', '#ff5a4e', '#2fd3b9', '#4f8bff']);
-  const parts = [P(GE.rbox, c, 0, 1.5, 0, 6.6, 2.2, 1.9), P(GE.rbox, '#a8dcf5', 0, 1.95, 0, 6.68, 0.75, 1.96),
-    P(GE.rbox, '#ffffff', 0, 2.68, 0, 6.2, 0.2, 1.7), P(GE.box, shade(c, 0.75), 0, 0.75, 0, 6.62, 0.18, 1.94),
-    P(GE.sphLo, '#fff6c8', 3.3, 0.9, 0.65, 0.13), P(GE.sphLo, '#fff6c8', 3.3, 0.9, -0.65, 0.13), P(GE.box, INK, 3.31, 2.5, 0, 0.04, 0.22, 1.1)];
+export function bus(x, z, ry, drive) {   // Stadtbus (vorne = +x): einzelne Fenster, zwei Türen rechts, Zielanzeige, Klimaanlage, Spiegel
+  const c = pick(['#ffd23f', '#ff5a4e', '#2fd3b9', '#4f8bff']), glass = '#9fd6f2', door = '#7fb8d8', dark = '#2f3542';
+  const parts = [P(GE.rbox, c, 0, 1.5, 0, 6.6, 2.2, 1.9), P(GE.rbox, '#ffffff', 0, 2.68, 0, 6.2, 0.2, 1.7), P(GE.box, shade(c, 0.75), 0, 0.75, 0, 6.62, 0.18, 1.94),
+    P(GE.box, '#e3e7ee', -0.8, 2.9, 0, 1.7, 0.3, 1.2), P(GE.box, '#9aa3b5', -0.8, 3.06, 0, 1.2, 0.02, 0.8),
+    P(GE.box, glass, 3.31, 1.72, 0, 0.04, 1.05, 1.66), P(GE.box, '#ffffff', 3.33, 1.8, 0.45, 0.02, 0.7, 0.08, 0.5, 0, 0),
+    P(GE.box, dark, 3.31, 2.42, 0, 0.04, 0.26, 1.4), P(GE.box, '#ffb02e', 3.335, 2.42, 0, 0.02, 0.09, 0.95),
+    P(GE.box, glass, -3.31, 1.95, 0, 0.04, 0.62, 1.5), P(GE.box, '#ff4136', -3.31, 0.95, 0.78, 0.04, 0.36, 0.14), P(GE.box, '#ff4136', -3.31, 0.95, -0.78, 0.04, 0.36, 0.14),
+    P(GE.box, dark, 3.36, 0.6, 0, 0.14, 0.3, 1.9), P(GE.box, dark, -3.36, 0.6, 0, 0.14, 0.3, 1.9),
+    P(GE.box, '#fff6c8', 3.32, 0.98, 0.62, 0.05, 0.16, 0.3), P(GE.box, '#fff6c8', 3.32, 0.98, -0.62, 0.05, 0.16, 0.3)];
+  for (const [wx, ww] of [[2.85, 0.75], [1.95, 0.82], [1.0, 0.82], [0.05, 0.82], [-0.9, 0.82], [-1.85, 0.82], [-2.8, 0.7]]) parts.push(P(GE.box, glass, wx, 1.97, -0.96, ww, 0.72, 0.02));
+  for (const [wx, ww] of [[1.95, 0.82], [1.0, 0.82], [-1.05, 0.82], [-2.0, 0.82], [-2.8, 0.7]]) parts.push(P(GE.box, glass, wx, 1.97, 0.96, ww, 0.72, 0.02));
+  for (const dx of [2.85, -0.1]) parts.push(P(GE.box, door, dx, 1.5, 0.96, 0.84, 1.6, 0.02), P(GE.box, dark, dx, 1.5, 0.975, 0.03, 1.6, 0.02));
+  for (const s of [-1, 1]) parts.push(P(GE.box, dark, 3.42, 2.15, s * 0.9, 0.3, 0.05, 0.05), P(GE.box, dark, 3.56, 1.98, s * 1.04, 0.06, 0.32, 0.14));
   wheels(parts, [[2.25, 0.88], [-2.2, 0.88], [2.25, -0.88], [-2.2, -0.88]], 0.45);
   return add(build(parts), x, z, { v: 40, ry, cols: [cBox(3.3, 1.39, 0.97, 0, 1.39)], ...(drive ? { drive } : {}) });
 }

@@ -1,5 +1,5 @@
 // Lochfrass! – Hauptprogramm: Spieler, Löcher, Gegner, Anzeige, Menüs
-import { THREE, scene, objects, MAP, ROADS, INK, NO_OUTLINE, toon, canvasTex, MAT, FADE, rand, clamp, getBoss, laneOf } from './kit.js';
+import { THREE, scene, objects, MAP, ROADS, INK, NO_OUTLINE, toon, canvasTex, fadeSet, rand, clamp, getBoss, laneOf } from './kit.js';
 import { OutlineEffect } from 'three/addons/effects/OutlineEffect.js';
 import * as PH from './physics.js';
 import { AVATARS, makeDeco } from './avatars.js';
@@ -818,7 +818,7 @@ function updateVisuals(dt, now) {
   const sc = sun.shadow.camera;
   if (sc.right !== ext) { sc.left = sc.bottom = -ext; sc.right = sc.top = ext; sc.updateProjectionMatrix(); }
   sun.position.set(player.x + 35, 70, ahead + 25); sun.target.position.set(player.x, 0, ahead);
-  // Häuser zwischen Kamera und Loch durchsichtig machen (stufenweise, mit gemeinsamen Materialien)
+  // Häuser zwischen Kamera und Loch durchsichtig machen (stufenweise, je Material drei gemeinsame durchsichtige Kopien)
   const H = camera.position.y, Dz = Math.max(1, camera.position.z - player.z);
   for (const o of objects) {
     if (!o.fade) continue;
@@ -827,7 +827,8 @@ function updateVisuals(dt, now) {
     const target = block ? 0.3 : 1;
     if (o.fk === target) continue;
     o.fk += (target - o.fk) * Math.min(1, dt * 8); if (Math.abs(o.fk - target) < 0.02) o.fk = target;
-    const m = o.fk > 0.86 ? MAT : o.fk > 0.6 ? FADE[0] : o.fk > 0.39 ? FADE[1] : FADE[2];
+    const base = o.mat0 || (o.mat0 = o.g.material), F = fadeSet(base);   // Wände, Läden und Dächer haben verschiedene Materialien
+    const m = o.fk > 0.86 ? base : o.fk > 0.6 ? F[0] : o.fk > 0.39 ? F[1] : F[2];
     if (o.g.material !== m) o.g.material = m;
   }
   if (!BOSS.gone) {   // der Endboss hat eigene Materialien

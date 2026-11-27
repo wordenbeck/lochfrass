@@ -1,43 +1,72 @@
 // Lochfrass! – Welt 1: Vorstadt
 import { THREE, MAP, ROADS, BLOCKS, INK, R, pick, rnd, setSeed, P, GE, build, add, cBox, cCyl, cBall, cCone, TEX, flat, roadNet, edgeRing,
-  person, bin, lamp, bench, tree, pine, bush, building, scatter, freeSpot, isFree, blocked, setBoss, canvasTex, toon, C, laneOf, MAT } from './kit.js';
+  person, bin, lamp, bench, tree, pine, bush, building, scatter, freeSpot, isFree, blocked, setBoss, canvasTex, toon, C, laneOf, MAT,
+  shade, chance, lpick } from './kit.js';
 import { decoFlat, flowerBed, arrow, manhole, flushDeco, garden, parasol, swing, sandbox, slide, seesaw, stall, duck,
   trafficLight, busStop, van, bus, dog } from './props.js';
 
 export const env = { sky: ['#4fb8ff', '#d6f1ff'], fog: 0xd6f1ff, hemi: [0xffffff, 0xb5d99a, 1.6], sun: [0xfff4e0, 2.2], gravity: -30 };
 
-function hydrant(x, z) {
-  return add(build([P(GE.cyl, '#ff4136', 0, 0.3, 0, 0.18, 0.6, 0.18), P(GE.sph, '#ff4136', 0, 0.6, 0, 0.18, 0.14, 0.18),
-    P(GE.cyl, '#ffd23f', 0, 0.38, 0, 0.08, 0.5, 0.08, 0, 0, Math.PI / 2)]), x, z, { v: 1, cols: [cCyl(0.3, 0.19), cBall(0.17, 0, 0.6)] });
+function hydrant(x, z) {   // Hydrant mit Fußring, Kappe und Anschlüssen
+  const r = '#ff4136', d = shade(r, 0.75), y = '#ffd23f';
+  return add(build([P(GE.cylLo, d, 0, 0.04, 0, 0.22, 0.08, 0.22), P(GE.cylLo, r, 0, 0.32, 0, 0.17, 0.5, 0.17), P(GE.cylLo, d, 0, 0.57, 0, 0.2, 0.05, 0.2),
+    P(GE.sphLo, r, 0, 0.6, 0, 0.17, 0.14, 0.17), P(GE.blob, y, 0, 0.76, 0, 0.05),
+    P(GE.cylLo, y, 0, 0.38, 0, 0.08, 0.5, 0.08, 0, 0, Math.PI / 2), P(GE.cylLo, y, 0, 0.38, 0.18, 0.09, 0.06, 0.09, Math.PI / 2, 0, 0)]),
+    x, z, { v: 1, cols: [cCyl(0.3, 0.19), cBall(0.17, 0, 0.6)] });
 }
-function small(x, z) {   // Hütchen, Briefkasten, Blumenkübel, Schild
+function small(x, z) {   // Hütchen, Briefkasten, Blumenkübel, Schild (Zufallszahlen in derselben Reihenfolge wie früher)
   const k = rnd();
-  if (k < 0.3) return add(build([P(GE.rbox, '#ff8a3d', 0, 0.04, 0, 0.5, 0.08, 0.5), P(GE.cone, '#ff8a3d', 0, 0.35, 0, 0.2, 0.6, 0.2),
-    P(GE.cyl, '#ffffff', 0, 0.33, 0, 0.14, 0.1, 0.14)]), x, z, { v: 1, cols: [cBox(0.25, 0.04, 0.25), cCone(0.3, 0.2, 0, 0.35)] });
-  if (k < 0.55) return add(build([P(GE.cylLo, '#3a4152', 0, 0.45, 0, 0.05, 0.9, 0.05), P(GE.rbox, '#ffd23f', 0, 1.0, 0, 0.42, 0.4, 0.3),
-    P(GE.rbox, INK, 0, 1.05, 0.16, 0.25, 0.05, 0.02)]), x, z, { v: 1, ry: R(0, 6.28), cols: [cCyl(0.45, 0.06), cBox(0.21, 0.2, 0.15, 0, 1.0)] });
-  if (k < 0.8) return add(build([P(GE.cyl, '#d9774a', 0, 0.25, 0, 0.32, 0.5, 0.32), P(GE.sph, pick(C.leaf), 0, 0.6, 0, 0.3, 0.22, 0.3),
-    P(GE.sph, pick(['#ff7ac6', '#ffd23f', '#ff5a4e', '#ffffff']), 0.1, 0.78, 0.05, 0.09), P(GE.sph, pick(['#ff7ac6', '#9b6bff', '#ffffff']), -0.12, 0.74, -0.04, 0.08)]),
-    x, z, { v: 1, cols: [cCyl(0.25, 0.32), cBall(0.27, 0, 0.62)] });
-  const m = build([P(GE.cylLo, '#9aa3b5', 0, 0.9, 0, 0.05, 1.8, 0.05), P(GE.cyl, pick(['#4f8bff', '#ff5a4e', '#ffd23f']), 0, 1.9, 0, 0.32, 0.06, 0.32, Math.PI / 2)]);
-  return add(m, x, z, { v: 1, ry: R(0, 6.28), cols: [cCyl(0.9, 0.06, 0, 0.9), cCyl(0.03, 0.32, 0, 1.9, 0, Math.PI / 2, 0)] });
+  if (k < 0.3) return add(build([P(GE.box, '#ff8a3d', 0, 0.04, 0, 0.5, 0.08, 0.5), P(GE.box, '#d9692a', 0, 0.085, 0, 0.36, 0.01, 0.36),
+    P(GE.cone, '#ff8a3d', 0, 0.37, 0, 0.2, 0.6, 0.2), P(GE.cylLo, '#ffffff', 0, 0.3, 0, 0.13, 0.08, 0.13), P(GE.cylLo, '#ffffff', 0, 0.48, 0, 0.072, 0.07, 0.072)]),
+    x, z, { v: 1, cols: [cBox(0.25, 0.04, 0.25), cCone(0.3, 0.2, 0, 0.35)] });
+  if (k < 0.55) return add(build([P(GE.cylLo, '#3a4152', 0, 0.45, 0, 0.05, 0.9, 0.05), P(GE.box, '#ffd23f', 0, 1.0, 0, 0.42, 0.4, 0.3),
+    P(GE.cylLo, '#ffd23f', 0, 1.2, 0, 0.12, 0.42, 0.15, 0, 0, Math.PI / 2), P(GE.box, INK, 0, 1.08, 0.155, 0.25, 0.04, 0.02),
+    P(GE.box, '#ffffff', 0, 0.9, 0.155, 0.22, 0.1, 0.02), P(GE.box, '#e0b300', 0, 0.8, 0, 0.44, 0.03, 0.32)]),
+    x, z, { v: 1, ry: R(0, 6.28), cols: [cCyl(0.45, 0.06), cBox(0.21, 0.2, 0.15, 0, 1.0)] });
+  if (k < 0.8) { const lf = pick(C.leaf), f1 = pick(['#ff7ac6', '#ffd23f', '#ff5a4e', '#ffffff']), f2 = pick(['#ff7ac6', '#9b6bff', '#ffffff']);
+    return add(build([P(GE.frustLo, '#d9774a', 0, 0.24, 0, 0.32, 0.48, 0.32, Math.PI, 0, 0), P(GE.cylLo, '#c4643a', 0, 0.49, 0, 0.35, 0.07, 0.35),
+      P(GE.cylLo, '#5a3a22', 0, 0.51, 0, 0.29, 0.03, 0.29), P(GE.sphLo, lf, 0, 0.62, 0, 0.3, 0.2, 0.3),
+      P(GE.blob, shade(lf, 0.85), 0.18, 0.6, -0.12, 0.13), P(GE.blob, shade(lf, 0.85), -0.17, 0.58, 0.1, 0.12),
+      P(GE.blob, f1, 0.1, 0.8, 0.05, 0.09), P(GE.blob, f2, -0.12, 0.76, -0.04, 0.08), P(GE.blob, f1, -0.02, 0.79, 0.16, 0.075)]),
+      x, z, { v: 1, cols: [cCyl(0.25, 0.32), cBall(0.27, 0, 0.62)] }); }
+  const sc = pick(['#4f8bff', '#ff5a4e', '#ffd23f']);
+  const parts = [P(GE.cylLo, '#9aa3b5', 0, 0.9, 0, 0.05, 1.8, 0.05), P(GE.cylLo, '#9aa3b5', 0, 1.9, -0.04, 0.34, 0.03, 0.34, Math.PI / 2, 0, 0),
+    P(GE.cyl, sc, 0, 1.9, 0, 0.32, 0.05, 0.32, Math.PI / 2, 0, 0)];
+  if (sc === '#ff5a4e') parts.push(P(GE.box, '#ffffff', 0, 1.9, 0.03, 0.38, 0.09, 0.02));   // Einfahrt verboten
+  else if (sc === '#4f8bff') parts.push(P(GE.box, '#ffffff', 0, 1.86, 0.03, 0.07, 0.3, 0.02),   // Pfeil
+    P(GE.box, '#ffffff', -0.05, 2.0, 0.03, 0.06, 0.16, 0.02, 0, 0, -0.7), P(GE.box, '#ffffff', 0.05, 2.0, 0.03, 0.06, 0.16, 0.02, 0, 0, 0.7));
+  else parts.push(P(GE.cylLo, INK, 0, 1.9, 0.03, 0.2, 0.01, 0.2, Math.PI / 2, 0, 0), P(GE.cylLo, sc, 0, 1.9, 0.035, 0.15, 0.01, 0.15, Math.PI / 2, 0, 0));
+  return add(build(parts), x, z, { v: 1, ry: R(0, 6.28), cols: [cCyl(0.9, 0.06, 0, 0.9), cCyl(0.03, 0.32, 0, 1.9, 0, Math.PI / 2, 0)] });
 }
+// Auto (vorne = +x): runde Karosserie, schräge Front- und Heckscheibe, Seitenfenster mit Säulen in Wagenfarbe,
+// Stoßstangen, Kühlergrill, Scheinwerfer, Rücklichter, Nummernschilder, Spiegel, Radkästen und Radkappen
 export function car(x, z, ry, drive, cols = C.car, taxi = false) {
-  const c = taxi ? '#ffd23f' : pick(cols);
-  const parts = [P(GE.carBody, c, 0, 0.66, 0), P(GE.carCab, '#a8dcf5', -0.2, 1.3, 0), P(GE.rbox, c, -0.2, 1.68, 0, 1.95, 0.14, 1.55),
-    P(GE.sph, '#fff6c8', 1.66, 0.75, 0.52, 0.12), P(GE.sph, '#fff6c8', 1.66, 0.75, -0.52, 0.12),
-    P(GE.sph, '#ff4136', -1.68, 0.75, 0.55, 0.09), P(GE.sph, '#ff4136', -1.68, 0.75, -0.55, 0.09)];
-  if (taxi) parts.push(P(GE.rbox, '#ffffff', -0.2, 1.86, 0, 0.55, 0.24, 0.95), P(GE.box, INK, -0.2, 1.86, 0, 0.57, 0.07, 0.97),
-    P(GE.box, INK, 0, 0.82, 0.86, 2.9, 0.12, 0.02), P(GE.box, INK, 0, 0.82, -0.86, 2.9, 0.12, 0.02));
-  for (const [wx, wz] of [[1.1, 0.8], [-1.1, 0.8], [1.1, -0.8], [-1.1, -0.8]]) {
-    parts.push(P(GE.cyl, '#2a2d36', wx, 0.4, wz, 0.4, 0.3, 0.4, Math.PI / 2)); parts.push(P(GE.cyl, '#d9dde5', wx, 0.4, wz * 1.07, 0.18, 0.3, 0.18, Math.PI / 2));
-  }
+  const c = taxi ? '#ffd23f' : pick(cols), glass = '#9fd6f2', dark = '#2f3542', cx = -0.1, cy = 0.98;
+  const roofC = !taxi && chance(0.2) ? (c === '#ffffff' ? '#3a4152' : '#ffffff') : c;   // manche mit andersfarbigem Dach
+  const parts = [P(GE.carBody, c, 0, 0.66, 0), P(GE.carTop, c, cx, cy, 0, 1, 1, 1.44), P(GE.box, roofC, cx - 0.3, cy + 0.7, 0, 1.36, 0.05, 1.46),
+    P(GE.box, glass, cx + 0.661, cy + 0.35, 0, 0.7, 0.03, 1.26, 0, 0, 2.294), P(GE.box, glass, cx - 1.114, cy + 0.346, 0, 0.54, 0.03, 1.2, 0, 0, 1.155),
+    P(GE.box, '#ffffff', cx + 0.67, cy + 0.36, 0.32, 0.5, 0.035, 0.08, 0, 0, 2.294), P(GE.box, '#ffffff', cx + 0.67, cy + 0.36, 0.17, 0.5, 0.035, 0.04, 0, 0, 2.294),
+    P(GE.box, dark, 1.66, 0.42, 0, 0.18, 0.2, 1.66), P(GE.box, dark, -1.66, 0.42, 0, 0.18, 0.2, 1.66), P(GE.box, dark, 1.71, 0.68, 0, 0.04, 0.16, 0.62),
+    P(GE.box, '#fff6c8', 1.69, 0.76, 0.52, 0.06, 0.14, 0.3), P(GE.box, '#fff6c8', 1.69, 0.76, -0.52, 0.06, 0.14, 0.3),
+    P(GE.box, '#ff4136', -1.69, 0.78, 0.55, 0.06, 0.12, 0.26), P(GE.box, '#ff4136', -1.69, 0.78, -0.55, 0.06, 0.12, 0.26),
+    P(GE.box, '#ffffff', 1.76, 0.44, 0, 0.02, 0.11, 0.4), P(GE.box, '#ffffff', -1.76, 0.44, 0, 0.02, 0.11, 0.4)];
+  for (const s of [-1, 1]) parts.push(P(GE.carWinF, glass, cx, cy, s * 0.725, 1, 1, 0.02), P(GE.carWinR, glass, cx, cy, s * 0.725, 1, 1, 0.02),
+    P(GE.box, c, 0.62, 1.1, s * 0.93, 0.1, 0.1, 0.16), P(GE.box, dark, 0, 0.36, s * 0.86, 2.5, 0.1, 0.04), P(GE.box, shade(c, 0.8), -0.22, 0.72, s * 0.855, 0.02, 0.44, 0.02));
+  if (taxi) { parts.push(P(GE.box, '#ffffff', cx - 0.3, cy + 0.84, 0, 0.5, 0.22, 0.86), P(GE.box, INK, cx - 0.3, cy + 0.84, 0, 0.52, 0.06, 0.88));
+    for (const s of [-1, 1]) { parts.push(P(GE.box, INK, -0.05, 0.8, s * 0.857, 2.6, 0.17, 0.02));   // Schachbrett-Streifen
+      for (let i = 0; i < 16; i++) parts.push(P(GE.box, '#ffffff', -1.3 + i * 0.1667, 0.8 + (i % 2 ? -0.042 : 0.042), s * 0.868, 0.167, 0.085, 0.02)); } }
+  for (const [wx, wz] of [[1.1, 0.8], [-1.1, 0.8], [1.1, -0.8], [-1.1, -0.8]]) { const s = Math.sign(wz);
+    parts.push(P(GE.cylLo, '#1d2129', wx, 0.42, s * 0.855, 0.47, 0.02, 0.47, Math.PI / 2, 0, 0), P(GE.cyl, '#2a2d36', wx, 0.4, wz, 0.4, 0.3, 0.4, Math.PI / 2, 0, 0),
+      P(GE.cylLo, '#d9dde5', wx, 0.4, wz + s * 0.12, 0.22, 0.08, 0.22, Math.PI / 2, 0, 0), P(GE.cylLo, '#9aa3b5', wx, 0.4, wz + s * 0.165, 0.08, 0.02, 0.08, Math.PI / 2, 0, 0)); }
   return add(build(parts), x, z, { v: 14, ry, cols: [cBox(1.7, 0.53, 0.86, 0, 0.53), cBox(0.95, 0.4, 0.75, -0.2, 1.3)], ...(drive ? { drive } : {}) });
 }
-function fountain(x, z) {
-  return add(build([P(GE.cyl, '#cfd6e0', 0, 0.3, 0, 2.1, 0.6, 2.1), P(GE.cyl, '#5cc8f5', 0, 0.58, 0, 1.85, 0.08, 1.85),
-    P(GE.cyl, '#cfd6e0', 0, 1.2, 0, 0.3, 1.6, 0.3), P(GE.cyl, '#cfd6e0', 0, 1.95, 0, 0.9, 0.2, 0.9),
-    P(GE.sph, '#5cc8f5', 0, 2.35, 0, 0.4), P(GE.sph, '#5cc8f5', 0, 2.9, 0, 0.22)]), x, z,
+function fountain(x, z) {   // Brunnen: Becken mit Rand und Wellenringen, Säule mit Schmuckringen, Schale, Wasserstrahl
+  const st = '#cfd6e0', st2 = '#e8edf3', wa = '#5cc8f5';
+  return add(build([P(GE.cyl, st, 0, 0.3, 0, 2.1, 0.6, 2.1), P(GE.cyl, wa, 0, 0.58, 0, 1.85, 0.08, 1.85), P(GE.torus, st2, 0, 0.62, 0, 2.0, 2.0, 0.6, Math.PI / 2, 0, 0),
+    P(GE.torus, '#bfeaff', 0, 0.63, 0, 1.25, 1.25, 0.25, Math.PI / 2, 0, 0), P(GE.torus, '#bfeaff', 0, 0.63, 0, 0.72, 0.72, 0.25, Math.PI / 2, 0, 0),
+    P(GE.cyl, st, 0, 1.2, 0, 0.3, 1.6, 0.3), P(GE.cylLo, st2, 0, 0.72, 0, 0.42, 0.16, 0.42), P(GE.cylLo, st2, 0, 1.72, 0, 0.38, 0.12, 0.38),
+    P(GE.cyl, st, 0, 1.95, 0, 0.9, 0.2, 0.9), P(GE.cyl, wa, 0, 2.06, 0, 0.8, 0.04, 0.8), P(GE.torus, st2, 0, 2.05, 0, 0.88, 0.88, 0.35, Math.PI / 2, 0, 0),
+    P(GE.sph, wa, 0, 2.35, 0, 0.4), P(GE.sph, wa, 0, 2.9, 0, 0.22), P(GE.blob, '#e6f7ff', 0, 3.15, 0, 0.12)]), x, z,
     { v: 22, cols: [cCyl(0.3, 2.1), cCyl(0.8, 0.3, 0, 1.2), cCyl(0.12, 0.9, 0, 1.95)] });
 }
 // Endboss: riesiges Hochhaus. Es passt nur ins Loch, wenn das Loch die ganze Grundfläche umschließt, und fällt dann senkrecht hinein.
@@ -90,7 +119,8 @@ export function create() {
         // kleine Häuser: 1 Etage · mittlere: 2 · große: 3. Die Haustür zeigt immer zur nächsten Straße.
         const k = rnd() + (cd < 50 ? 0.2 : 0), fl = k < 0.38 ? 1 : k < 0.82 ? 2 : 3;
         const sz = fl === 1 ? [4.5, 5.5] : fl === 2 ? [5.5, 7] : [6.5, 8], w = R(sz[0], sz[1]), d = R(sz[0], sz[1] - 0.3), face = oz > 0 ? 1 : -1;
-        building(bx + ox, bz + oz, w, d, fl, { roof: rnd() < 0.65 ? 'pitched' : 'flat', ry: face > 0 ? 0 : Math.PI, flowers: rnd() < 0.6, solar: 0.35 });
+        building(bx + ox, bz + oz, w, d, fl, { roof: rnd() < 0.65 ? 'pitched' : 'flat', ry: face > 0 ? 0 : Math.PI, flowers: rnd() < 0.6, solar: 0.35,
+          shutters: chance(0.45) ? lpick(['#3fae6b', '#4f8bff', '#ffffff', '#8a5634', '#ff5a4e', '#2fd3b9']) : null });
         const z0 = bz + oz + face * (d / 2 + 0.1), z1 = bz + face * 10;   // Weg von der Haustür zum Gehweg
         decoFlat('#e6d3ad', bx + ox, (z0 + z1) / 2, 1.3, Math.abs(z1 - z0));
         blocked.push([bx + ox - 0.8, bx + ox + 0.8, Math.min(z0, z1), Math.max(z0, z1)]);

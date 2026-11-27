@@ -14,6 +14,7 @@ Live: https://wordenbeck.github.io/lochfrass/
 - Echte Physik (Rapier): Dinge kippen über die Lochkante, verkanten sich und fallen hinein. Häuser haben 1–3 Etagen (Hochhäuser mehr), die einzeln abbrechen
 - Schwierigkeit wählbar (Leicht / Normal / Schwer). Gegner starten langsam und werden über eine Anlaufzeit schneller und schlauer
 - Look: Comic (Cel-Shading, dunkle Konturlinien, kräftige Farben, runde Formen)
+- Details (27.11.): Die vorhandenen Dinge sind feiner gebaut. Fenster haben Rahmen, Gardinen und Sprossen, Läden zeigen Waren im Schaufenster, Wohnblöcke haben Jalousien. Dächer sind mit Ziegeln gedeckt und haben Regenrinne, Schornstein, Giebelfenster und Solarzellen, einige Häuser Fensterläden. Autos, Taxis, Lieferwagen und Busse haben Scheiben, Spiegel, Lichter und Kennzeichen. Leute haben Arme, Hände, Schuhe und Frisuren, und auf dem Boden sieht man Grasbüschel, Pflaster und Risse im Asphalt. Collider und Positionen sind unverändert, die Balance bleibt also gleich. Zufällige Deko (Fensterläden, Obstbäume …) zieht ihre Zahlen aus einem eigenen Zufallsgenerator (`LR`, `lpick`, `chance` in `kit.js`), damit die Welt an denselben Stellen steht. Jede Welt hat 22–30 % weniger Dreiecke als vorher, weil die abgerundeten Kisten weniger Segmente haben
 - Kamera (von Thomas mit den Reglern eingestellt): Höhe 25,5, Neigung am Start 55°, ab Lochgröße 2 (Bäume) 45°, Mitwachsen 0,35, Bildwinkel 46° (`CAM` in `main.js`). Die Neigung wechselt weich, die Kamera fährt mit dem Loch nach oben
 - Kamera-Regler: Spiel mit `?kamera` hinter der Adresse öffnen (z. B. wordenbeck.github.io/lochfrass/?kamera). Dann gibt es unten links Regler, die Zeit läuft nicht ab, und „Werte kopieren" liefert die Zeile für `main.js` (`js/kamera.js`)
 - Technik: `index.html` plus JS-Module, Three.js und Rapier über CDN, Sound per Web Audio (ohne Dateien), keine Build-Tools, Hosting auf GitHub Pages (0 €)
@@ -52,13 +53,14 @@ Gemessen mit dem Autopilot im Tempo eines Durchschnittsspielers (`__lf.ap(0.8, 0
 
 | Welt | Mittel | Spanne | Läufe |
 |---|---|---|---|
-| Vorstadt | 1:19 | 1:13–1:34 | 6 (mit den neuen Details) |
+| Vorstadt | 1:24 | 1:13–1:38 | 9 |
 | Sonnenbucht | 1:29 | 1:24–1:29 | 3 |
 | Bauernhof | 1:20 | 1:06–1:45 | 4 |
 | Rummelplatz | 1:33 | 1:22–1:40 | 4 |
 | Mondbasis | 1:26 | 1:05–1:56 | 5 |
 
 Erste Autos nach etwa 10–15 s, erste Häuser nach etwa 30–45 s. Seit der Gegner-Bremse wurde der Autopilot in keinem dieser Läufe gefressen.
+Vorstadt nach der Detail-Runde (27.11.): 1:30, 1:36, 1:38. Zwei Vergleichsläufe mit dem Stand davor: einmal 1:38, einmal kein Endboss in 2 Minuten. Der Autopilot streut also stark, die Details selbst ändern an der Physik nichts.
 
 ## XP & Stufen
 1 Kleinkram & Menschen · 2 Laternen & Bänke · 3 Büsche · 4 Autos · 5 Bäume · 6 Brunnen & Gartenhäuser · 7 Häuser · 8 Wohnblöcke · 9 Endboss.
@@ -77,6 +79,8 @@ Die Anzeige oben links zeigt Stufe und XP bis zur nächsten Stufe. Beim Aufstieg
 | 0–1c | Prototyp, Comic-Grafik, Modi, Combo, Sound, Autoverkehr, Siegerpodest | ✅ |
 | 2 | Echte Physik, Etagen-Häuser, Spielerprofile, Avatare, schnelleres Wachstum | ✅ |
 | 3 | Welten 2–5 mit eigenem Endboss, Gegner-Bremse, Wachstum je Welt abgestimmt | ✅ |
+| 3b | Detail-Runde: Häuser, Bäume, Leute, Bänke, Laternen, Mülleimer und Böden in allen Welten feiner, dazu Fahrzeuge und Kleinkram der Vorstadt | ✅ |
+| 3c | Eigene Dinge der anderen Welten genauso verfeinern (Boote, Traktoren, Fahrgeschäfte, Mondmodule …) | offen |
 | 4 | Spielgefühl am iPad prüfen: Tempo, Steuerung, Performance der neuen Welten | als Nächstes |
 | 5 | PWA: offline spielbar (Manifest + Icon ✅, Service Worker fehlt) | offen |
 

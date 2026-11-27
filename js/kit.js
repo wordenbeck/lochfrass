@@ -316,7 +316,9 @@ export function bush(x, z, leaf = C.leaf, flowers = ['#ff7ac6', '#fff', '#ffd23f
 }
 
 // Gebäude aus Etagen: Jede Etage und das Dach sind eigene Objekte. Beim Fressen fällt das Haus Stück für Stück auseinander.
-// st: wall (Farbe), roof ('pitched' | 'flat' | 'none'), roofCol, fh (Etagenhöhe), door, awning, balcony, band, base, ry, vk (Wert-Faktor), tile
+// st: wall (Farbe), roof ('pitched' | 'flat' | 'none'), roofCol, fh (Etagenhöhe), door, awning, balcony, band, base, ry, vk (Wert-Faktor), tile,
+//     flowers (Blumenkästen vorne), solar (Anteil 0–1: Solarzellen auf dem Satteldach), shops (Farbe: gestreifte Markise über dem Erdgeschoss)
+const BOX_FLOWERS = ['#ff7ac6', '#ffd23f', '#ff5a4e', '#ffffff', '#9b6bff'];
 export function building(x, z, w, d, floors, st = {}) {
   const wall = st.wall || pick(C.wall), fh = st.fh || FH, ry = st.ry || 0, rc = st.roofCol || pick(C.roof), vk = st.vk || 1;
   const pieces = [];
@@ -328,8 +330,21 @@ export function building(x, z, w, d, floors, st = {}) {
       if (st.door !== false) parts.push(P(GE.rbox, st.doorCol || '#8a5634', 0, 1.0, d / 2 + 0.04, 1.1, Math.min(2, fh - 0.6), 0.14),
         P(GE.sph, '#ffd23f', 0.35, 1.0, d / 2 + 0.13, 0.07));
       if (st.awning !== false && fh >= 2.8) parts.push(P(GE.rbox, st.awnCol || rc, 0, 2.2, d / 2 + 0.35, 1.7, 0.12, 0.75));
+      if (st.shops) {   // Läden im Erdgeschoss: gestreifte Markise über die ganze Breite
+        const n = Math.max(4, Math.round(w / 0.6)), sw = (w - 0.4) / n;
+        for (let i = 0; i < n; i++) parts.push(P(GE.box, i % 2 ? '#ffffff' : st.shops, -w / 2 + 0.2 + (i + 0.5) * sw, 2.35, d / 2 + 0.45, sw, 0.1, 0.95, 0.35, 0, 0));
+      }
     } else if (st.balcony) {
       parts.push(P(GE.rbox, '#ffffff', 0, 0.12, d / 2 + 0.5, w * 0.7, 0.18, 1.0), P(GE.rbox, st.balcony, 0, 0.55, d / 2 + 0.95, w * 0.7, 0.7, 0.1));
+    }
+    if (st.flowers && fh >= 2.4) {   // Blumenkästen unter den Fenstern der Vorderseite
+      const nx = Math.max(1, Math.round(w / (st.tile || 2.7))), tw = w / nx;
+      for (let i = 0; i < nx; i++) {
+        const cx = -w / 2 + (i + 0.5) * tw, bw = tw * 0.5;
+        if ((k === 0 && Math.abs(cx) < 0.9) || rnd() < 0.3) continue;   // nicht vor der Tür, nicht überall
+        parts.push(P(GE.box, '#9a6236', cx, fh * 0.2, d / 2 + 0.13, bw, 0.2, 0.24));
+        for (let j = 0; j < 3; j++) parts.push(P(GE.sphLo, pick(BOX_FLOWERS), cx + (j - 1) * bw / 3, fh * 0.2 + 0.15, d / 2 + 0.15, 0.11));
+      }
     }
     const cols = [cBox(w / 2, fh / 2, d / 2)];
     pieces.push(add(build(parts), x, z, { y: k * fh, ry, v: Math.max(3, Math.round(w * d * fh / 10 * vk)), cols, fade: true }));
@@ -339,6 +354,12 @@ export function building(x, z, w, d, floors, st = {}) {
     const rh = Math.min(w, d) * (st.rh || R(0.35, 0.5)), W2 = (w + 0.6) / 2, D2 = (d + 0.6) / 2;
     const parts = [P(GE.prism, rc, 0, -0.05, 0, w + 0.6, rh, d + 0.6)];
     if (st.chimney !== false && rnd() < 0.6) parts.push(P(GE.rbox, '#b5674d', w * 0.25, rh * 0.5, d * 0.12, 0.55, rh * 0.95, 0.55));
+    if (st.solar && rnd() < st.solar) {   // Solarzellen auf der linken Dachseite (rechts steht der Schornstein)
+      const a = Math.atan2(rh, W2), L = Math.hypot(W2, rh);
+      const on = t => [-W2 / 2 - t * Math.sin(a), rh / 2 - 0.05 + t * Math.cos(a)];   // Punkt auf der Dachmitte, t über der Dachfläche
+      parts.push(P(GE.box, '#2b3a67', ...on(0.06), 0, L * 0.62, 0.07, (d + 0.6) * 0.62, 0, 0, a),
+        P(GE.box, '#6f8fd8', ...on(0.1), 0, L * 0.62, 0.02, 0.05, 0, 0, a));
+    }
     pieces.push(add(build(parts), x, z, { y: top, ry, v: Math.max(2, Math.round(w * d * rh / 20 * vk)), fade: true,
       cols: [cHull([-W2, 0, -D2, W2, 0, -D2, -W2, 0, D2, W2, 0, D2, 0, rh, -D2, 0, rh, D2])] }));
   } else if (roof === 'flat') {
@@ -350,7 +371,8 @@ export function building(x, z, w, d, floors, st = {}) {
   }
   for (const p of pieces) p.link = pieces;
   const rw = Math.abs(Math.sin(ry)) > 0.7 ? d : w, rd = Math.abs(Math.sin(ry)) > 0.7 ? w : d;
-  blocked.push([x - rw / 2 - 0.6, x + rw / 2 + 0.6, z - rd / 2 - 0.6, z + rd / 2 + 1.2]);
+  const fx = Math.round(Math.sin(ry)), fz = Math.round(Math.cos(ry));   // Vorderseite (dort ist die Tür): etwas mehr Platz lassen
+  blocked.push([x - rw / 2 - 0.6 - (fx < 0 ? 0.6 : 0), x + rw / 2 + 0.6 + (fx > 0 ? 0.6 : 0), z - rd / 2 - 0.6 - (fz < 0 ? 0.6 : 0), z + rd / 2 + 0.6 + (fz > 0 ? 0.6 : 0)]);
   return pieces;
 }
 

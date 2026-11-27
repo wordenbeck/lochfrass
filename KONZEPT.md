@@ -68,6 +68,8 @@ Als Messlatte dient der Autopilot im Tempo eines Durchschnittsspielers. Die ande
 ## Technik
 `index.html` plus JS-Module, Three.js und die Physik-Engine Rapier über CDN, Web Audio, localStorage, Hosting auf GitHub Pages. Laufende Kosten: 0 €.
 
+Module: `main.js` (Spielablauf, Kamera, Menüs), `physics.js`, `kit.js` (Baukasten: Häuser, Bäume, Leute …), `props.js` (Details: Garten, Spielplatz, Café, Ampel, Bushaltestelle, Lieferwagen, Bus, Hund, Boden-Schmuck), `avatars.js`, `kamera.js` (Kamera-Regler, nur mit `?kamera`), `world-<id>.js` (je eine Welt).
+
 ## Bewusst weggelassen
 - **Echter Mehrspieler:** bräuchte einen Server, und der kostet. Das Original setzt ebenfalls auf Bots.
 - **Vibration:** Safari auf dem iPad unterstützt sie nicht.

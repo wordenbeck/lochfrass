@@ -1,10 +1,13 @@
 // Kamera-Regler zum Ausprobieren. Erscheint nur, wenn das Spiel mit ?kamera hinter der Adresse geöffnet wird.
 // Die Regler ändern die Kamera sofort. Die Einstellung bleibt auf dem Gerät gespeichert, bis du „Zurück" drückst.
 // Wenn es passt: „Werte kopieren" und die Zeile in main.js bei const CAM = { ... } eintragen.
-const KEY = 'lochfrass-kamera';
-const REGLER = [   // [Wert in CAM, Name, von, bis, Schrittweite, Anzeige]
+const KEY = 'lochfrass-kamera2';   // neuer Name: alte Einstellungen (nur eine Neigung) nicht mehr laden
+localStorage.removeItem('lochfrass-kamera');
+const REGLER = [   // [Wert in CAM, Name, von, bis, Schrittweite, Anzeige (bekommt den Stufen-Namen als 2. Wert)]
   ['h', 'Höhe', 6, 60, 0.5, v => v.toFixed(1)],
-  ['tilt', 'Neigung', 25, 85, 1, v => v + '° (90° = von oben)'],
+  ['tilt', 'Neigung am Start', 25, 85, 1, v => v + '°'],
+  ['tiltBig', 'Neigung später', 25, 85, 1, v => v + '°'],
+  ['tiltR', 'Wechsel bis Größe', 0.7, 10, 0.1, (v, stage) => v.toFixed(1) + ' · ' + stage(v)],
   ['grow', 'Mitwachsen', 0, 0.8, 0.01, v => v.toFixed(2)],
   ['fov', 'Bildwinkel', 20, 80, 1, v => v + '°'],
 ];
@@ -48,15 +51,15 @@ export function regler({ CAM, stages, size, setSize }) {
         <input type="range" data-k="size" min="0.6" max="14" step="0.1"></label>
       <div class="cpBtns"><button data-a="reset">Zurück</button><button data-a="copy">Werte kopieren</button></div>
       <code></code>
-      <p class="cpHint">Testmodus: die Zeit läuft nicht ab.</p>
+      <p class="cpHint">Neigung 90° = genau von oben. Die Zeit läuft hier nicht ab.</p>
     </div>`;
   document.body.append(box);
 
   const q = s => box.querySelector(s);
-  const line = () => `const CAM = { h: ${CAM.h}, tilt: ${CAM.tilt}, grow: ${CAM.grow}, fov: ${CAM.fov} };`;
+  const line = () => `const CAM = { ${REGLER.map(([k]) => `${k}: ${CAM[k]}`).join(', ')} };`;
   const stageName = r => (stages.filter(([s]) => r >= s - 0.001).pop() || stages[0])[1];
   function show() {   // Regler und Zahlen auf den aktuellen Stand bringen
-    for (const [k, , , , , fmt] of REGLER) { q(`input[data-k=${k}]`).value = CAM[k]; q(`output[data-k=${k}]`).textContent = fmt(CAM[k]); }
+    for (const [k, , , , , fmt] of REGLER) { q(`input[data-k=${k}]`).value = CAM[k]; q(`output[data-k=${k}]`).textContent = fmt(CAM[k], stageName); }
     q('code').textContent = line();
   }
   const save = () => localStorage.setItem(KEY, JSON.stringify(Object.fromEntries(REGLER.map(([k]) => [k, CAM[k]]))));

@@ -14,7 +14,7 @@ Live: https://wordenbeck.github.io/lochfrass/
 - Echte Physik (Rapier): Dinge kippen über die Lochkante, verkanten sich und fallen hinein. Häuser haben 1–3 Etagen (Hochhäuser mehr), die einzeln abbrechen
 - Schwierigkeit wählbar (Leicht / Normal / Schwer). Gegner starten langsam und werden über eine Anlaufzeit schneller und schlauer
 - Look: Comic (Cel-Shading, dunkle Konturlinien, kräftige Farben, runde Formen)
-- Kamera: schräg von hinten (gut 50° Neigung), zoomt mit dem Loch heraus. Das Loch nimmt etwa ein Fünftel der Bildbreite ein, am Start weniger (`CAM` in `main.js`: Höhe, Neigung, Mitwachsen, Bildwinkel)
+- Kamera (von Thomas mit den Reglern eingestellt): Höhe 25,5, Neigung am Start 55°, ab Lochgröße 2 (Bäume) 45°, Mitwachsen 0,35, Bildwinkel 46° (`CAM` in `main.js`). Die Neigung wechselt weich, die Kamera fährt mit dem Loch nach oben
 - Kamera-Regler: Spiel mit `?kamera` hinter der Adresse öffnen (z. B. wordenbeck.github.io/lochfrass/?kamera). Dann gibt es unten links Regler, die Zeit läuft nicht ab, und „Werte kopieren" liefert die Zeile für `main.js` (`js/kamera.js`)
 - Technik: `index.html` plus JS-Module, Three.js und Rapier über CDN, Sound per Web Audio (ohne Dateien), keine Build-Tools, Hosting auf GitHub Pages (0 €)
 
@@ -24,7 +24,7 @@ Alle Welten sind von Anfang an spielbar. Weltwert = Summe aller Objektwerte, dar
 
 | Welt | Endboss | Besonderheit | Objekte | Weltwert | Wachstum |
 |---|---|---|---|---|---|
-| 🏘️ Vorstadt | Riesenturm | Häuser, Wohnblöcke, Autoverkehr | 1.415 | 8.621 | 1,0 |
+| 🏘️ Vorstadt | Riesenturm | Häuser mit Gärten (Pool, Trampolin, Schaukel …), Wohnblöcke mit Läden, Parks mit Spielplatz und Enten, Plätze mit Café und Markt, Ampeln, Bushaltestellen, Autos, Taxis, Lieferwagen, Busse, Hunde | 1.640 | 9.129 | 1,0 |
 | 🏖️ Sonnenbucht | Leuchtturm (Lichtkegel dreht sich) | Strand, Hafen mit Containern, Hotels, Buggys, Krabben | 1.408 | 8.885 | 1,0 |
 | 🚜 Bauernhof | Windmühle (Flügel drehen sich) | Scheunen, Silos, Felder, Weiden, Traktoren, Tiere | 1.567 | 8.669 | 1,2 |
 | 🎡 Rummelplatz | Freifallturm (Gondel fällt) | Karussells, Riesenrad, Autoscooter, Zirkus, Geisterbahn | 1.395 | 8.282 | 1,0 |
@@ -52,7 +52,7 @@ Gemessen mit dem Autopilot im Tempo eines Durchschnittsspielers (`__lf.ap(0.8, 0
 
 | Welt | Mittel | Spanne | Läufe |
 |---|---|---|---|
-| Vorstadt | 1:27 | 1:19–1:41 | 5 |
+| Vorstadt | 1:19 | 1:13–1:34 | 6 (mit den neuen Details) |
 | Sonnenbucht | 1:29 | 1:24–1:29 | 3 |
 | Bauernhof | 1:20 | 1:06–1:45 | 4 |
 | Rummelplatz | 1:33 | 1:22–1:40 | 4 |

@@ -570,8 +570,13 @@ const AP = { speed: 1, smart: 1 };   // Autopilot zum Testen; mit weniger Tempo/
 let shakeT = 0, shakeA = 0, bossEaten = false, bossReadyShown = false, endT = 0, leader = null, jamHintShown = false;
 const T = { car: 0, house: 0, boss: 0 };   // wann zum ersten Mal ein Auto, ein Haus, der Endboss (für Tests)
 const camLook = new THREE.Vector3(player.x, 0, player.z);
-const CAM = { h: 13, b: 10.5, d: Math.hypot(13, 10.5), z0: 1.1, zr: 0.42 };   // Höhe und Abstand nach hinten (mal Zoom), Zoom = z0 + Radius · zr
-camera.position.set(player.x, CAM.h * 1.25, player.z + CAM.b * 1.25);
+// Kamera: h = Höhe beim kleinen Loch, tilt = Neigung (90° wäre genau von oben), grow = wie stark sie mit dem Loch nach oben fährt, fov = Bildwinkel.
+// Zum Ausprobieren das Spiel mit ?kamera hinter der Adresse öffnen, dann gibt es Regler dafür (js/kamera.js)
+const CAM = { h: 17.6, tilt: 51, grow: 0.31, fov: 50 };
+const CAM_TEST = new URLSearchParams(location.search).has('kamera');   // Testmodus mit Reglern: die Zeit läuft nicht ab
+const DEG = Math.PI / 180;
+const camZoom = r => Math.max(0.4, 1 + CAM.grow * (r - R0));   // 1 beim kleinen Loch, wird mit dem Radius größer
+camera.position.set(player.x, CAM.h * 1.25, player.z + CAM.h * 1.25 / Math.tan(CAM.tilt * DEG));
 
 function startGame() {
   D = DIFFS[diffKey];
@@ -632,7 +637,8 @@ const PCB = {
 };
 
 function update(dt) {
-  timeLeft -= dt; elapsed += dt;
+  if (!CAM_TEST) timeLeft -= dt;
+  elapsed += dt;
   if (timeLeft <= 0 || (endT > 0 && (endT -= dt) <= 0)) return endRound();
   const sec = Math.ceil(timeLeft);
   if (sec !== lastSec) { lastSec = sec; if (sec <= 10) SND.tick(sec <= 3); }   // Countdown in den letzten 10 Sekunden
@@ -765,13 +771,14 @@ function updateVisuals(dt, now) {
     h.glow.material.opacity = h.skin.pulse ? 0.55 + 0.45 * Math.sin(now / 180) : 1;
     if (h.deco) { h.decoGrp.visible = h.alive; h.decoGrp.position.set(h.x, 0, h.z); h.decoGrp.scale.setScalar(h.rShow * ps); h.deco.anim(now / 1000, dt, h); }
   }
-  // Kamera schräg von hinten (gut 50° Neigung), zoomt mit dem Loch heraus: das Loch bleibt etwa ein Fünftel der Bildbreite
-  const zoom = CAM.z0 + player.rShow * CAM.zr, camD = CAM.d * zoom;
+  // Kamera schräg von hinten, fährt mit dem Loch nach oben und hinten: mit großem Loch siehst du mehr von der Karte
+  if (camera.fov !== CAM.fov) { camera.fov = CAM.fov; camera.updateProjectionMatrix(); }
+  const camY = CAM.h * camZoom(player.rShow), camB = camY / Math.tan(CAM.tilt * DEG), camD = Math.hypot(camY, camB);
   scene.fog.near = 40 + camD * 1.6; scene.fog.far = scene.fog.near + 250;
-  camera.position.lerp(new THREE.Vector3(player.x, CAM.h * zoom, player.z + CAM.b * zoom), Math.min(1, dt * 3));
+  camera.position.lerp(new THREE.Vector3(player.x, camY, player.z + camB), Math.min(1, dt * 3));
   camLook.lerp(new THREE.Vector3(player.x, 0, player.z - 0.5), Math.min(1, dt * 5));
   camera.lookAt(camLook);
-  if (shakeT > 0) { shakeT -= dt; const a = shakeA * Math.min(1, shakeT / 0.25) * zoom;
+  if (shakeT > 0) { shakeT -= dt; const a = shakeA * Math.min(1, shakeT / 0.25) * camD / 16.7;
     camera.position.x += (Math.random() - 0.5) * a; camera.position.y += (Math.random() - 0.5) * a; if (shakeT <= 0) shakeA = 0; }
   updatePuffs(dt);
   if (BOSS.anim && !BOSS.gone) BOSS.anim(dt, now / 1000);   // z. B. Windmühlenflügel, Leuchtturm-Licht
@@ -800,8 +807,11 @@ function updateVisuals(dt, now) {
       arrow.style.display = 'block'; arrow.style.left = cx + vx * k + 'px'; arrow.style.top = cy + vy * k + 'px';
       arrow.firstElementChild.style.transform = `rotate(${Math.atan2(vy, vx)}rad)`; }
   } else arrow.style.display = 'none';
-  // Schatten-Bereich folgt dem Spieler (schärfere Schatten als über die ganze Karte)
-  const ext = Math.round(10 + camD * 0.9), ahead = player.z - camD * 0.26;   // Mitte des sichtbaren Bodens liegt vor dem Loch
+  // Schatten-Bereich deckt nur den sichtbaren Boden ab (schärfere Schatten als über die ganze Karte)
+  const half = CAM.fov / 2 * DEG, lo = Math.max(6 * DEG, CAM.tilt * DEG - half);   // flachster Blickstrahl am oberen Bildrand
+  const zFar = camB - Math.min(camY / Math.tan(lo), scene.fog.near + 60), zNear = camB - camY / Math.tan(CAM.tilt * DEG + half);
+  const wide = camY / Math.sin(lo) * Math.tan(half) * camera.aspect;   // halbe Bildbreite am oberen Rand
+  const ext = Math.round(Math.max(wide, (zNear - zFar) / 2) + 4), ahead = player.z + (zFar + zNear) / 2;
   const sc = sun.shadow.camera;
   if (sc.right !== ext) { sc.left = sc.bottom = -ext; sc.right = sc.top = ext; sc.updateProjectionMatrix(); }
   sun.position.set(player.x + 35, 70, ahead + 25); sun.target.position.set(player.x, 0, ahead);
@@ -923,3 +933,9 @@ window.__lf = { player, holes, objects, TOTAL, TOTAL_VALUE, starScores, PH, BOSS
       stages: Object.entries(reach).map(([s, t]) => STAGE_NAMES[s] + ' ' + t).join(', '),
       bots: bots.map(b => b.name + ':' + b.score + (b.out ? ' raus' : '')), active: PH.activeCount(), stars: starScores(), total: TOTAL_VALUE };
   } };
+
+// Kamera-Regler zum Ausprobieren: das Spiel mit ?kamera hinter der Adresse öffnen
+if (CAM_TEST) import('./kamera.js').then(m => m.regler({ CAM,
+  stages: STAGES.map((r, i) => [r, STAGE_NAMES[i]]),
+  size: () => player.rShow,
+  setSize(r) { player.mass = massFor(r); if (!running) player.r = player.rShow = r; } }));
